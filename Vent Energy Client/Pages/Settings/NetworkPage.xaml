@@ -1,0 +1,59 @@
+﻿<UserControl x:Class="ventEnergy.Pages.Settings.NetworkPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mui="http://firstfloorsoftware.com/ModernUI"
+             xmlns:vec="clr-namespace:NetworkSaverWpf.NSControls;assembly=tweakWpfControls"
+             mc:Ignorable="d" Height="445.333" Width="428.667" x:Name="NtwPage">
+    <Grid Style="{StaticResource ContentRoot}">
+        <ScrollViewer Margin="-6,0,6,0">
+            <StackPanel MinWidth="200">
+                <TextBlock Style="{StaticResource Heading2}" ><Run x:Name="run" Text="НАСТРОЙКИ СЕТИ"/></TextBlock>
+                <Grid x:Name="belsIPGrid" Width="268" Height="125">
+                    <Rectangle  x:Name="belsRect" HorizontalAlignment="Left" Height="26" Margin="-1,17,0,0" VerticalAlignment="Top" Width="111" StrokeThickness="2"/>
+                    <Label Content="Сеть Белсолод" HorizontalAlignment="Left" Margin="3,15,0,0" VerticalAlignment="Top" FontWeight="Medium"/>
+                    <!--<CheckBox x:Name ="ipCheckBox" Content="IP" HorizontalAlignment="Left" Margin="3,-14,0,0" VerticalAlignment="Top" LostFocus="CheckBox_LostFocus" Checked="CheckBox_Checked"  Unchecked="CheckBox_Checked"/>-->
+                    <vec:IPTextBox x:Name="belsIPadr" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,48,15,0" TotalLostFocus="belsIPadr_LostFocus" />
+                    <vec:IPTextBox x:Name="belsMask" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="0.533,-0.111" Margin="0,71,15,0" TotalLostFocus="belsMask_LostFocus"/>
+                    <vec:IPTextBox x:Name="belsGate" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="0.533,-0.111" Margin="0,94,15,0" TotalLostFocus="belsGate_LostFocus"/>
+                    <Label x:Name="belsIPadrLab" Content="IP-Адрес" HorizontalAlignment="Left" Margin="3,48,0,0" VerticalAlignment="Top" Width="76" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <Label x:Name="belsMaskLab" Content="Маска подсети" HorizontalAlignment="Left" Margin="3,71,0,0" VerticalAlignment="Top" Width="105" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <Label x:Name="belsGatewayLab" Content="Основной шлюз" HorizontalAlignment="Left" Margin="3,94,0,0" VerticalAlignment="Top" Width="105" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <!--<RadioButton Content="Получить IP-адрес автоматически" GroupName="IP" HorizontalAlignment="Left" Margin="0,6,0,0" VerticalAlignment="Top"/>
+            <RadioButton Content="Использовать следующий IP-адрес" GroupName="IP" HorizontalAlignment="Left" Margin="0,21,0,0" VerticalAlignment="Top"/>-->
+                    <!--<Button x:Name="belsCurValIPButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,48,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>
+                    <Button x:Name="belsCurValMaskButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,71,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>
+                    <Button x:Name="belsCurValGatewayButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,94,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>-->
+                    <Button x:Name="applyBelsbutt" Content="" HorizontalAlignment="Left" Margin="257,48,-24,12" Width="35"  BorderThickness="1,0,0,1" BorderBrush="#FFD8D8D8" Background="White" Opacity="0.99" Foreground="#FFD8D8D8" Click="applyBelsbutt_Click"/>
+                </Grid>
+                <Grid x:Name="wincIPGrid" Width="268" Height="125">
+                    <Rectangle x:Name="wincRect" HorizontalAlignment="Left" Height="26" Margin="-1,17,0,0" VerticalAlignment="Top" Width="111" StrokeThickness="2"/>
+                    <Label Content="Сеть Wincos"  HorizontalAlignment="Left" Margin="3,0,0,82" VerticalAlignment="Bottom" FontWeight="Medium"/>
+                    <!--<CheckBox x:Name ="ipCheckBox" Content="IP" HorizontalAlignment="Left" Margin="3,-14,0,0" VerticalAlignment="Top" LostFocus="CheckBox_LostFocus" Checked="CheckBox_Checked"  Unchecked="CheckBox_Checked"/>-->
+                    <vec:IPTextBox x:Name="wincIPadr" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,48,15,0" TotalLostFocus="wincIPadr_LostFocus" Backbrush="White" FontSize="11"/>
+                    <vec:IPTextBox x:Name="wincMask" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="0.533,-0.111" Margin="0,71,15,0" TotalLostFocus="wincMask_LostFocus"/>
+                    <vec:IPTextBox x:Name="wincGate" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="0.533,-0.111" Margin="0,94,15,0" TotalLostFocus="wincGate_LostFocus"/>
+                    <Label x:Name="wincIPadrLab" Content="IP-Адрес" HorizontalAlignment="Left" Margin="3,48,0,0" VerticalAlignment="Top" Width="76" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <Label x:Name="wincMaskLab" Content="Маска подсети" HorizontalAlignment="Left" Margin="3,71,0,0" VerticalAlignment="Top" Width="105" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <Label x:Name="wincGatewayLab" Content="Основной шлюз" HorizontalAlignment="Left" Margin="3,94,0,0" VerticalAlignment="Top" Width="105" Height="18" FontSize="12" Padding="0,0,0,2"/>
+                    <!--<RadioButton Content="Получить IP-адрес автоматически" GroupName="IP" HorizontalAlignment="Left" Margin="0,6,0,0" VerticalAlignment="Top"/>
+            <RadioButton Content="Использовать следующий IP-адрес" GroupName="IP" HorizontalAlignment="Left" Margin="0,21,0,0" VerticalAlignment="Top"/>-->
+                    <!--<Button x:Name="wincCurValIPButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,48,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>
+                    <Button x:Name="wincCurValMaskButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,71,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>
+                    <Button x:Name="wincCurValGatewayButt" Content="" HorizontalAlignment="Right" MinWidth="1" MinHeight="1" Margin="0,94,138,0" VerticalAlignment="Top" Width="8" Height="19" BorderThickness="0" Background="#FFAEADAD" Focusable="False"/>-->
+                    <Button x:Name="applyWincbutt" Content="" HorizontalAlignment="Left" Margin="257,48,-23,12" Width="34"  BorderThickness="1,0,0,1" BorderBrush="#FFD8D8D8" Background="White" Opacity="0.99" Foreground="#FFD8D8D8" Click="applyWincsbutt_Click"/>
+                </Grid>
+                <Grid x:Name ="comboBoxGrid" HorizontalAlignment="Left" Height="37" Margin="45,20,0,0" VerticalAlignment="Top" Width="275">
+                    <ComboBox x:Name="comboBoxAdapters" HorizontalAlignment="Left" VerticalAlignment="Top" DisplayMemberPath="DescrForUser" SelectionChanged="comboBoxAdapters_SelectedIndexChanged" Background="White" Height="22" Width="275" LostFocus="comboBoxAdapters_LostFocus" RenderTransformOrigin="0.521,0.922" Margin="-3,3,0,0" />
+                </Grid>
+                <Grid Height="64">
+                    <TextBlock x:Name="MsgLabel" Text="" FontSize="14" TextWrapping="Wrap" FontFamily="Arial" RenderTransformOrigin="0.47,6.099" Margin="0,10,0,7" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Width="240" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="151,2,0,0">
+            <ProgressBar x:Name="pb1" Minimum="0" Maximum="1" Height="16" IsIndeterminate="False" Margin="0,0,0,0" IsEnabled="True" Visibility="Hidden" />
+        </StackPanel>
+    </Grid>
+</UserControl>

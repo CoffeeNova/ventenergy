@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>twpRegwrk.1.0.0.0.Fakes</name>
+    </assembly>
+    <members>
+        <member name="T:NWTweak.Fakes.ShimRegistryHelpers">
+            <summary>Shim type of NWTweak.RegistryHelpers</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryHelpers.#ctor">
+            <summary>Initializes a new shim instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryHelpers.#ctor(NWTweak.RegistryHelpers)">
+            <summary>Initializes a new shim for the given instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryHelpers.BehaveAsCurrent">
+            <summary>Assigns the &apos;Current&apos; behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryHelpers.BehaveAsNotImplemented">
+            <summary>Assigns the &apos;NotImplemented&apos; behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryHelpers.Behavior">
+            <summary>Assigns the behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryHelpers.Constructor">
+            <summary>Sets the shim of RegistryHelpers.RegistryHelpers()</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryHelpers.GetRegistryKeyString">
+            <summary>Sets the shim of RegistryHelpers.GetRegistryKey(String keyPath)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryHelpers.GetRegistryValueStringString">
+            <summary>Sets the shim of RegistryHelpers.GetRegistryValue(String keyPath, String keyName)</summary>
+        </member>
+        <member name="T:NWTweak.Fakes.ShimRegistryHelpers.AllInstances">
+            <summary>Define shims for all instances members</summary>
+        </member>
+        <member name="T:NWTweak.Fakes.ShimRegistryWorker">
+            <summary>Shim type of NWTweak.RegistryWorker</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryWorker.#ctor">
+            <summary>Initializes a new shim instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryWorker.#ctor(NWTweak.RegistryWorker)">
+            <summary>Initializes a new shim for the given instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryWorker.BehaveAsCurrent">
+            <summary>Assigns the &apos;Current&apos; behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.ShimRegistryWorker.BehaveAsNotImplemented">
+            <summary>Assigns the &apos;NotImplemented&apos; behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.Behavior">
+            <summary>Assigns the behavior for all methods of the shimmed type</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.Constructor">
+            <summary>Sets the shim of RegistryWorker.RegistryWorker()</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.CreateSubKeyRegistryWorkerWhichRootStringString">
+            <summary>Sets the shim of RegistryWorker.CreateSubKey(WhichRoot rootKey, String subKeyLocation, String subKeyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.DeleteKeyRegistryWorkerWhichRootStringString">
+            <summary>Sets the shim of RegistryWorker.DeleteKey(WhichRoot rootKey, String subKey, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.DeleteKeyRegistryWorkerWhichRootStringStringString">
+            <summary>Sets the shim of RegistryWorker.DeleteKey(WhichRoot rootKey, String subKeyLocation, String subKeyName, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.FindSubKeyStringString">
+            <summary>Sets the shim of RegistryWorker.FindSubKey(String subKeyLocation, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.GetKeyValueRegistryWorkerWhichRootStringString">
+            <summary>Sets the shim of RegistryWorker.GetKeyValue(WhichRoot rootKey, String subKey, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.GetKeyValueRegistryWorkerWhichRootStringStringString">
+            <summary>Sets the shim of RegistryWorker.GetKeyValue(WhichRoot rootKey, String subKeyLocation, String subKeyName, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.GetSubKeyNamesString">
+            <summary>Sets the shim of RegistryWorker.GetSubKeyNames(String path)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.HKCU_FindSubKeyStringString">
+            <summary>Sets the shim of RegistryWorker.HKCU_FindSubKey(String subKeyLocation, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.HKLM_FindSubKeyStringString">
+            <summary>Sets the shim of RegistryWorker.HKLM_FindSubKey(String subKeyLocation, String keyName)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.RootPathString">
+            <summary>Sets the shim of RegistryWorker.RootPath(String path)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.WriteKeyValueRegistryWorkerWhichRootStringStringRegistryValueKindString">
+            <summary>Sets the shim of RegistryWorker.WriteKeyValue(WhichRoot rootKey, String subKey, String keyName, RegistryValueKind valueKind, String value)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.WriteKeyValueRegistryWorkerWhichRootStringStringRegistryValueKindStringArray">
+            <summary>Sets the shim of RegistryWorker.WriteKeyValue(WhichRoot rootKey, String subKey, String keyName, RegistryValueKind valueKind, String[] value)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.WriteKeyValueRegistryWorkerWhichRootStringStringStringRegistryValueKindString">
+            <summary>Sets the shim of RegistryWorker.WriteKeyValue(WhichRoot rootKey, String subKeyLocation, String subKeyName, String keyName, RegistryValueKind valueKind, String value)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.WriteKeyValueRegistryWorkerWhichRootStringStringStringRegistryValueKindStringArray">
+            <summary>Sets the shim of RegistryWorker.WriteKeyValue(WhichRoot rootKey, String subKeyLocation, String subKeyName, String keyName, RegistryValueKind valueKind, String[] value)</summary>
+        </member>
+        <member name="T:NWTweak.Fakes.ShimRegistryWorker.AllInstances">
+            <summary>Define shims for all instances members</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.AllInstances.GetSubKeyNamesString">
+            <summary>Sets the shim of RegistryWorker.GetSubKeyNames(String path)</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.ShimRegistryWorker.AllInstances.RootPathString">
+            <summary>Sets the shim of RegistryWorker.RootPath(String path)</summary>
+        </member>
+        <member name="T:NWTweak.Fakes.StubRegistryHelpers">
+            <summary>Stub type of NWTweak.RegistryHelpers</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.StubRegistryHelpers.#ctor">
+            <summary>Initializes a new instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.StubRegistryHelpers.InitializeStub">
+            <summary>Initializes a new instance of type StubRegistryHelpers</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryHelpers.CallBase">
+            <summary>Gets or sets a value that indicates if the base method should be called instead of the fallback behavior</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryHelpers.InstanceBehavior">
+            <summary>Gets or sets the instance behavior.</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryHelpers.InstanceObserver">
+            <summary>Gets or sets the instance observer.</summary>
+        </member>
+        <member name="T:NWTweak.Fakes.StubRegistryWorker">
+            <summary>Stub type of NWTweak.RegistryWorker</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.StubRegistryWorker.#ctor">
+            <summary>Initializes a new instance</summary>
+        </member>
+        <member name="M:NWTweak.Fakes.StubRegistryWorker.InitializeStub">
+            <summary>Initializes a new instance of type StubRegistryWorker</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryWorker.CallBase">
+            <summary>Gets or sets a value that indicates if the base method should be called instead of the fallback behavior</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryWorker.InstanceBehavior">
+            <summary>Gets or sets the instance behavior.</summary>
+        </member>
+        <member name="P:NWTweak.Fakes.StubRegistryWorker.InstanceObserver">
+            <summary>Gets or sets the instance observer.</summary>
+        </member>
+    </members>
+</doc>

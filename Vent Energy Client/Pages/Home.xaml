@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="ventEnergy.Pages.Home"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="700" Loaded="UserControl_Loaded" IsVisibleChanged="UserControl_IsVisibleChanged" >
+
+    <Grid Style="{StaticResource ContentRoot}">
+        <ScrollViewer>
+            <StackPanel MinWidth="200">
+                <Grid  Width="Auto" Height="456">
+                    <ListBox x:Name="VentsListBox" BorderThickness="1"  BorderBrush="#FFBCBCBC"  ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Left" Height="Auto" MaxHeight="425" VerticalAlignment="Top" 
+                             Width="220" DisplayMemberPath="descr" SelectionChanged="VentsListBox_SelectionChanged"  FontSize="18" FontWeight="Normal">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Height" Value="40" />
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                    <DatePicker x:Name="dateP" FirstDayOfWeek="Monday"  HorizontalAlignment="Left" Margin="465,10,0,0" VerticalAlignment="Top" Width="193" SelectedDateChanged="dateP_SelectedDateChanged" IsEnabled="False" />
+                    <StackPanel Width="240" HorizontalAlignment="Left" Margin="220,15,0,419">
+                        <ProgressBar x:Name="pb1" Minimum="0" Maximum="1" Height="16" IsIndeterminate="False" Margin="0,0,0,16" IsEnabled="True" Visibility="Hidden" />
+                    </StackPanel>
+                    <Grid x:Name="workGrid" Width="450" HorizontalAlignment="Right" VerticalAlignment="Bottom"  Height="366" Margin="0,0,0,31">
+
+                    </Grid>
+                    <TextBlock x:Name="totaltb" HorizontalAlignment="Left" TextWrapping="Wrap"  FontSize="14" TextAlignment="Left" VerticalAlignment="Bottom" Width="419" Height="30" Margin="250,0,0,0"/>
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>
+
+
+
+    

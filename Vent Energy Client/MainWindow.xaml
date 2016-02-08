@@ -1,0 +1,31 @@
+﻿<mui:ModernWindow
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mui="http://firstfloorsoftware.com/ModernUI"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="ventEnergy.MainWindow"
+        Title="Vent Energy Client" IsTitleVisible="False" x:Name="main" Visibility="Hidden" x:FieldModifier="public" MouseLeftButtonDown="main_MouseLeftButtonDown" Closed="main_Closed"
+                
+    ContentSource="/Pages/Home.xaml" ResizeMode="CanMinimize" d:DesignWidth="700" d:DesignHeight="500" ScrollViewer.CanContentScroll="False" ScrollViewer.VerticalScrollBarVisibility="Disabled" WindowStartupLocation="CenterScreen" Icon="Icons/belsolodLogo.ico">
+<mui:ModernWindow.MenuLinkGroups>
+    <mui:LinkGroup x:Name="mainLinkGroup">
+        <mui:LinkGroup.Links>
+            <mui:Link x:Name="dayLink" DisplayName="Часовой срез" Source="/Pages/Home.xaml" />
+                <mui:Link x:Name="monthLink" DisplayName="За месяц по дням" Source="/Pages/Two.xaml"  />
+        </mui:LinkGroup.Links>
+
+    </mui:LinkGroup>
+    <mui:LinkGroup DisplayName="Настройки" GroupKey="settings">
+            <mui:LinkGroup.Links>
+                <mui:Link DisplayName="Общие" Source="/Pages/SettingsPage.xaml" />
+        </mui:LinkGroup.Links>
+    </mui:LinkGroup>
+
+</mui:ModernWindow.MenuLinkGroups>
+
+
+
+<mui:ModernWindow.TitleLinks>
+    <mui:Link DisplayName="настройки" Source="/Pages/SettingsPage.xaml" />
+    <mui:Link DisplayName="сайт" Source="http://www.belsolod.by" />
+</mui:ModernWindow.TitleLinks>
+</mui:ModernWindow>
