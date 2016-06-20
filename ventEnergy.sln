@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ventEnergyServ", "ventEnergyServ\ventEnergyServ.csproj", "{F74EB770-DD2D-4C11-AFFA-1E0F80A2C8C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vent Energy Client", "Vent Energy Client\Vent Energy Client.csproj", "{712A6EF1-A304-4EE9-912E-F86C4C87E44F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ventEnergy", "ventEnergy\ventEnergy.csproj", "{A443125E-70AF-4672-92C9-6562332FE187}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Registry worker", "..\Tweak Project\Registry worker\Registry worker.csproj", "{CA5C485E-C547-45B4-9B3B-94B236BD0C69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ventEnergyWeb", "ventEnergyWeb\ventEnergyWeb.csproj", "{257E0459-327C-4335-A703-274A0B685868}"
 EndProject
@@ -55,16 +53,6 @@ Global
 		{A443125E-70AF-4672-92C9-6562332FE187}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{A443125E-70AF-4672-92C9-6562332FE187}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{A443125E-70AF-4672-92C9-6562332FE187}.Release|x86.ActiveCfg = Release|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{CA5C485E-C547-45B4-9B3B-94B236BD0C69}.Release|x86.ActiveCfg = Release|Any CPU
 		{257E0459-327C-4335-A703-274A0B685868}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{257E0459-327C-4335-A703-274A0B685868}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{257E0459-327C-4335-A703-274A0B685868}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

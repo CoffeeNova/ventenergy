@@ -14,49 +14,50 @@ namespace ventEnergy.Pages.Settings
     /// </summary>
     public partial class General : UserControl
     {
-        VentsTools vt;
-        CheckBoxLP cb;
-        private readonly Logger log = LogManager.GetCurrentClassLogger();
+        VentsTools _vt;
+        CheckBoxLP _cb;
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
         public General()
         {
             InitializeComponent();
 
             VentsTools.onChangeSettingsString += this.UpdateMessageLabel;
-            vt = new VentsTools();
-            cb = new CheckBoxLP();
+            _vt = new VentsTools();
+            _cb = new CheckBoxLP();
 
-            List<FrameworkElement> onlyCheckBoxes = new List<FrameworkElement>();
-            List<FrameworkElement> allElem = new List<FrameworkElement>();
+            var onlyCheckBoxes = new List<FrameworkElement>();
+            var allElem = new List<FrameworkElement>();
             //создадим список всех элементов на форме
-            vt.ChildControls(this, allElem);
+            _vt.ChildControls(this, allElem);
             //выберем из списка только чекбоксы
             foreach (FrameworkElement elem in allElem)
             {
-                if (elem.GetType() == cb.GetType())
-                {
+                if (elem.GetType() == _cb.GetType())
                     onlyCheckBoxes.Add(elem);
-                }
-
             }
             try
             {
                 foreach (CheckBoxLP chbx in onlyCheckBoxes)
                 {
-                    if (RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name) != null)
-                        if (RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name).ToString() != "")
-                        {
+                    try
+                    {
+                        if (RegistryWorker.GetKeyValue<int>(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, chbx.Name) != 0)
                             chbx.IsChecked = true;
-                        }
+                    }
+                    catch (System.IO.IOException ex)
+                    {
+                        chbx.IsChecked = false;
+                    }
+
                 }
             }
-            catch  (Exception ex)
+            catch (Exception ex)
             {
-                log.Error(ex.Message + " (чтение из реестра)");
-                VentsTools.currentSettingString = "Ошибка чтения реестра. Запустите программу от имени администратора";
+                _log.Error(ex.Message + " (чтение из реестра)");
+                VentsTools.currentSettingString = "Ошибка чтения реестра";
             }
         }
-        //if ((Int32)RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name) == 1)
-        
+
         private void CheckBox_IsMouseCapturedChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             okButton.IsEnabled = true;
@@ -64,35 +65,26 @@ namespace ventEnergy.Pages.Settings
 
         private void okButton_Click(object sender, RoutedEventArgs e)
         {
-            const string value = "1";
             okButton.IsEnabled = false;
 
-            List<FrameworkElement> checkBoxesLP = new List<FrameworkElement>(vt.ListOfCheckBoxes(MainGrid, cb.GetType()));
+            var checkBoxesLP = new List<FrameworkElement>(_vt.ListOfCheckBoxes(MainGrid, _cb.GetType()));
             try
             {
-                if (RegistryWorker.CreateSubKey(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, "Software", VentsConst._PROJECTGROUPNAME) && RegistryWorker.CreateSubKey(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._PROJECTGROUPLOCATION, VentsConst._PROJECTNAME) && RegistryWorker.CreateSubKey(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._PROJECTLOCATION, VentsConst._SETTINGS))
+                if (RegistryWorker.CreateSubKey(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION))
                 {
                     //проверяем чекбоксы на IsChecked и записываем/удаляем из реестра
                     foreach (CheckBoxLP chbx in checkBoxesLP)
                     {
                         if (chbx.IsChecked == true)
-                        {
-                            RegistryWorker.WriteKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name, Microsoft.Win32.RegistryValueKind.DWord, value);
-
-                        }
+                            RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.DWord, chbx.Name, 1);
                         else
-                        {
-                            if (RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name) != null)
-                            {
-                                RegistryWorker.DeleteKey(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, chbx.Name);
-                            }
-                        }
+                            RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.DWord, chbx.Name, 0);
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                log.Error(ex.Message);
+                _log.Error(ex.Message);
             }
         }
         private void UpdateMessageLabel(string currentAction)

@@ -29,28 +29,30 @@ namespace ventEnergy
             public const int defaultMinute = 00;
         }
 
-        private bool debugBit = false;    // set true to see how to fill database
-        private bool tryToConnect = false;
+        #region private fields
+        private bool _debugBit = false;    // set true to see how to fill database
+        private bool _tryToConnect = false;
         
-        private S7Client Client;
-        private System.Threading.Timer readDataTimer;
-        private readonly Logger log = LogManager.GetCurrentClassLogger();      
-        private int checkInterval;
-        private int hour;
-        private int minute;
-        private List<Vents> VentsData;
+        private S7Client _client;
+        private System.Threading.Timer _readDataTimer;
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();      
+        private int _checkInterval;
+        private int _hour;
+        private int _minute;
+        private List<Vents> _ventsData;
         private delegate bool timeDelegate(int time, int rangeMin, int rangeMax);
+        #endregion
 
         public MainServerForm(string[] args)
         {
 
             InitializeComponent();
-            VentsData = new List<Vents>();
+            _ventsData = new List<Vents>();
 
 
-            checkInterval = VentsConst._DEFAULT_CHECK_INTERVAL;
-            hour = System.DateTime.Now.Hour;
-            minute = ReadData.defaultMinute;
+            _checkInterval = VentsConst._DEFAULT_CHECK_INTERVAL;
+            _hour = System.DateTime.Now.Hour;
+            _minute = ReadData.defaultMinute;
             #region args
             bool firstRunArgsBit = false;
             foreach (string arg in args)
@@ -64,27 +66,11 @@ namespace ventEnergy
                     }   
                     catch
                     {
-                        log.Error("Задан не числовой аргумент -int");
+                        _log.Error("Задан не числовой аргумент -int");
                         Process.GetCurrentProcess().Kill();
                     }
-                    checkInterval = i;
+                    _checkInterval = i;
                 }
-                //if(arg.StartsWith("-hour"))
-                //{
-                //    int h = ReadData.defaultHour;
-                //    try
-                //    {
-                //        h = Convert.ToInt32(arg.Split('=')[1]);
-                //        if (h < 0 || h > 23)
-                //            throw new Exception();
-                //    }   
-                //    catch
-                //    {
-                //        log.Error("Задан не верный числовой аргумент -hour");
-                //        Process.GetCurrentProcess().Kill();
-                //    }
-                //    hour= h;
-                //}
                 if (arg.StartsWith("-min"))
                 {
                     int m = ReadData.defaultMinute;
@@ -96,38 +82,37 @@ namespace ventEnergy
                     }
                     catch
                     {
-                        log.Error("Задан не верный числовой аргумент -min");
+                        _log.Error("Задан не верный числовой аргумент -min");
                         Process.GetCurrentProcess().Kill();
                     }
-                    minute = m;
+                    _minute = m;
                 }
 
                 if (arg.StartsWith("-debug"))
                 {
-                    debugBit = true;
-                    checkInterval = Int32.MaxValue;
+                    _debugBit = true;
+                    _checkInterval = Int32.MaxValue;
                 }
                 if (arg.StartsWith("-firstrun"))
                     firstRunArgsBit = true;
 
-            #endregion
             }
+            #endregion
 
             try
             {
-                Client = new S7Client();
+                _client = new S7Client();
             }
             catch (Exception ex)
             {
-                log.Error(ex.Message);
+                _log.Error(ex.Message);
                 Process.GetCurrentProcess().Kill();
             }
 
             bool firsRunRegBit = false;
             try
             {
-                
-                var notFirstRunValue = RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, VentsConst._SERVNOTFIRSTRUN);
+                var notFirstRunValue = RegistryWorker.GetKeyValue<bool>(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, VentsConst._SERVNOTFIRSTRUN);
                 if (notFirstRunValue == null)
                     firsRunRegBit = true;
                 else if ((bool)notFirstRunValue == true)
@@ -137,9 +122,9 @@ namespace ventEnergy
             }
             catch
             {
-                log.Error("Unable to read registry");
+                _log.Error("Unable to read registry");
             }
-
+            #region todo
             //if (firstRunArgsBit || firsRunRegBit || debugBit)
             //{
             //    string question = "Внимание! Программа запускается первый раз. При первом запуске производится очистка всех значений базы данных. Для запуска без очистки базы нажмите \"No\",  для выхода из программы нажмите \"Cancel\". ";
@@ -158,7 +143,8 @@ namespace ventEnergy
             //        Application.Exit();
             //    }
             //}
-            readDataTimer = new System.Threading.Timer(ReadDataEvent, null, 0, checkInterval);
+            #endregion
+            _readDataTimer = new System.Threading.Timer(ReadDataEvent, null, 0, _checkInterval);
 
         }
 
@@ -168,43 +154,43 @@ namespace ventEnergy
             //watch.Start();
             //timeDelegate func = (x, min, max) => { if (x >= min && x <= max) return true; return false; };
             //func(System.DateTime.Now.Hour, 0, 23) &&
-            if ((minute == System.DateTime.Now.Minute && !tryToConnect) || (debugBit && !tryToConnect))
+            if ((_minute == System.DateTime.Now.Minute && !_tryToConnect) || (_debugBit && !_tryToConnect))
                 {
                     int tempConnected;
 
-                    tryToConnect = false;
+                    _tryToConnect = false;
                     // 0 - connection successfull 
-                    tempConnected = Client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT);
+                    tempConnected = _client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT);
                     if (tempConnected != 0)
                     {
                         ShowError(tempConnected);
-                        tryToConnect = true;
+                        _tryToConnect = true;
                         return;
                     }
                     else
                     {
-                        Client.Disconnect();
+                        _client.Disconnect();
                         new Thread(DirtyJob).Start();  
                     }
 
                 }
                 
-            if (tryToConnect)
+            if (_tryToConnect)
                 {
                     int tempConnected;
 
-                    tempConnected = Client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT);
+                    tempConnected = _client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT);
                     if (tempConnected != 0)
                     {
                         //ShowError(tempConnected); уберем ошибку из лога, будет повторяться очень часто одинаковая
                         Func<int, int> compare = x => { if (x == -1) return 59; return x; };
-                        if (System.DateTime.Now.Minute == compare(minute - 1))
-                            tryToConnect = false;
+                        if (System.DateTime.Now.Minute == compare(_minute - 1))
+                            _tryToConnect = false;
                     }
                     else
                     {
-                        Client.Disconnect();
-                        tryToConnect = false;
+                        _client.Disconnect();
+                        _tryToConnect = false;
                         new Thread(DirtyJob).Start();
                     }
                 
@@ -214,17 +200,18 @@ namespace ventEnergy
 
         }
         private delegate string ventdel(int DB, int start, int size);
+       
         private void DirtyJob()
         {
             VentsTools VT = new VentsTools();
             bool refreshValues = false;
-            if (VT.ReadConfigFromDB(VentsConst.connectionString, VentsConst._CONFtb, ref VentsData))
+            if (VT.ReadConfigFromDB(VentsConst.connectionString, VentsConst._CONFtb, ref _ventsData))
                 if (ReadDataFromPLC())
                 {
                     //проверим нет ли значений превышающих _MAX_ENERGY_COUNTER (*100 квтч), если есть - добавим число к общему значению счетчика (ventEnergyConf.tb 'countvalue')
                     //также проверим нет ли нулевых значений (что может означать неисправность, например "нет связи")
                     //если есть ноль, проверим сообщение об ошибке, и если есть ошибка заменим значение на -1
-                    foreach(Vents record in VentsData)
+                    foreach(Vents record in _ventsData)
                     {
                         
                         if (record.value >= VentsConst._MAX_ENERGY_COUNTER)
@@ -235,19 +222,19 @@ namespace ventEnergy
                                 string RDY_REF_state = "";
                                 try
                                 {
-                                    if (Client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
+                                    if (_client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
                                         throw new Exception("Cant connect to PLC");
 
                                     int result;
                                     byte[] buffer = new byte[1];
                                     System.Collections.BitArray ba;
 
-                                    result = Client.DBRead(DB, start+1, size, buffer); //vent.startBit+1,- secont byte of Input Stateword (RDY_REF bit is a 3rd bit)
+                                    result = _client.DBRead(DB, start+1, size, buffer); //vent.startBit+1,- secont byte of Input Stateword (RDY_REF bit is a 3rd bit)
                                     if (result != 0)
                                         ShowError(result);
                                     else
                                     {
-                                        Client.Disconnect();
+                                        _client.Disconnect();
                                         ba = new System.Collections.BitArray(new byte[] { buffer[0] });
                                         return ba.Get(2) ? RDY_REF_state = "Ebabled" : RDY_REF_state = "Disabled";
                                     }
@@ -255,7 +242,7 @@ namespace ventEnergy
                                 }
                                 catch (Exception ex)
                                 {
-                                    log.Error(ex.Message);
+                                    _log.Error(ex.Message);
                                     return RDY_REF_state;
                                 }
                             };
@@ -277,7 +264,7 @@ namespace ventEnergy
 
                         }
                     }
-                    //если обнаружено превышение счетчика, то не будем записывать считанные данные, а подождем немного и выполнил "грязную работу" еще раз
+                    //если обнаружено превышение счетчика, то не будем записывать считанные данные, а подождем немного и выполним "грязную работу" еще раз
                     if (refreshValues)
                     {
                         Thread.Sleep(1000);
@@ -288,9 +275,9 @@ namespace ventEnergy
                         //сохраним значения в БД, если за этот час не было записей
                         int LRCHres = VT.LastRecordCurrentHour(System.DateTime.Now);
                         if(LRCHres== 0 )
-                            VT.WriteDataToDB(VentsData);
-                        else if (debugBit)
-                            VT.WriteDataToDB(VentsData);
+                            VT.WriteDataToDB(_ventsData);
+                        else if (_debugBit)
+                            VT.WriteDataToDB(_ventsData);
                     }
                 }
         }
@@ -300,9 +287,9 @@ namespace ventEnergy
         {
             try             
             {
-                if (Client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
+                if (_client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
                     throw new Exception("Cant connect to PLC");
-                foreach(Vents vent in VentsData)
+                foreach(Vents vent in _ventsData)
                 {
                     int result;
                     
@@ -317,15 +304,15 @@ namespace ventEnergy
                     byte[] buffer = new byte[VentsConst.ppo2TypeProcessDataSize];
                     byte[] etalonZeroBuffer = Enumerable.Repeat<byte>(0, VentsConst.ppo2TypeProcessDataSize).ToArray();
 
-                    result = Client.DBRead(vent.DB, vent.startBit, VentsConst.ppo2TypeProcessDataSize, buffer); //vent.startBit+6,- PZD4 address
+                    result = _client.DBRead(vent.DB, vent.startBit, VentsConst.ppo2TypeProcessDataSize, buffer); //vent.startBit+6,- PZD4 address
                     if (result != 0)
                         ShowError(result);
                     else
                         //check buffer, if all bytes are 0 - symptom that PLC couldn't be connected to Frequency Converter
                         vent.value = (Enumerable.SequenceEqual(buffer, etalonZeroBuffer) || vent.isEnabled == false) ? -1 : buffer[6] << 8 | buffer[7];
                 }
-                VentsData.RemoveAll(x => x.value == -1);
-                int discResult = Client.Disconnect();
+                _ventsData.RemoveAll(x => x.value == -1);
+                int discResult = _client.Disconnect();
                 if (discResult != 0)
                 { 
                     ShowError(discResult);
@@ -335,7 +322,7 @@ namespace ventEnergy
             }
             catch(Exception ex)
             {
-                log.Error(ex.Message);
+                _log.Error(ex.Message);
                 return false;
             }
         }
@@ -351,7 +338,7 @@ namespace ventEnergy
             bool state = false;
             try
             {
-                if (Client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
+                if (_client.ConnectTo(VentsConst._ipPLC, VentsConst._RACK, VentsConst._SLOT) != 0)
                     throw new Exception("Cant connect to PLC");
                 int startByteInt;
                 int result;
@@ -399,7 +386,7 @@ namespace ventEnergy
                 }
                 byte[] buffer = new byte[1];
                 buffer[0] = mBitb;
-                result = Client.MBWrite(startByteInt, 1, buffer);
+                result = _client.MBWrite(startByteInt, 1, buffer);
                 if (result != 0)
                 {
                     ShowError(result);
@@ -408,7 +395,7 @@ namespace ventEnergy
                 else
                     state = true;
 
-                discResult = Client.Disconnect();
+                discResult = _client.Disconnect();
                 if (discResult != 0)
                 {
                     ShowError(discResult);
@@ -417,8 +404,8 @@ namespace ventEnergy
             }
             catch(Exception ex)
             {
-                log.Error(ex.Message);
-                discResult = Client.Disconnect();
+                _log.Error(ex.Message);
+                discResult = _client.Disconnect();
                 if (discResult != 0)
                 {
                     ShowError(discResult);
@@ -429,7 +416,7 @@ namespace ventEnergy
         private void ShowError(int Result)
         {
             // This function returns a textual explaination of the error code
-            log.Error(Client.ErrorText(Result));
+            _log.Error(_client.ErrorText(Result));
         }
         private void Form1_Shown(Object sender, EventArgs e)
         {

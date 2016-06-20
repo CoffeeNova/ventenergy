@@ -17,126 +17,122 @@ namespace ventEnergy.Pages
     /// </summary>
     public partial class Home : UserControl
     {
-        private readonly Logger log = LogManager.GetCurrentClassLogger();
-        private List<Vents> VentsData = new List<Vents>();
-        private VentsTools VT;
-        private IntPtr FNDhwnd;
-        private Thread FNDthread;
-        private Thread FVDthread;
-        private DateTime date;
-        private System.Threading.Timer waitingModeDelay;
-        DateTime FirstDay = DateTime.MinValue;
-        DateTime LastDay = DateTime.MinValue;
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private List<Vents> _ventsData = new List<Vents>();
+        private VentsTools _vt;
+        private IntPtr _fndHwnd;
+        private Thread _fndThread;
+        private Thread _fvdThread;
+        private DateTime _date;
+        private System.Threading.Timer _delayTimer;
+        DateTime _firstDay = DateTime.MinValue;
+        DateTime _lastDay = DateTime.MinValue;
 
-        public static Visibility testVisib;
+        public static Visibility _testVisib;
+
+        //свойство отвечает за визуализацию прогресс бара
+        private bool PBPerform
+        {
+            set
+            {
+                if (value)
+                    _delayTimer = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+                else
+                {
+                    Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
+                    _delayTimer.Dispose();
+                }
+            }
+        }
+
         public Home()
         {
             InitializeComponent();
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("ru-RU");
             Thread.CurrentThread.CurrentCulture = new CultureInfo("ru-RU");
 
-            
+
             #region datagrid config init
-          //  dataG1.AutoGenerateColumns = false;
-          //  dataG1.MaxHeight = 380;
-          //  //dataG1.RowHeight = 46;
-          //  dataG1.CanUserAddRows = false;
-          //  dataG1.CanUserDeleteRows = false;
-          //  dataG1.CanUserReorderColumns = false;
-          //  dataG1.CanUserResizeColumns = false;
-          //  dataG1.CanUserResizeRows = false;
-          //  dataG1.CanUserSortColumns = false;
+            //  dataG1.AutoGenerateColumns = false;
+            //  dataG1.MaxHeight = 380;
+            //  //dataG1.RowHeight = 46;
+            //  dataG1.CanUserAddRows = false;
+            //  dataG1.CanUserDeleteRows = false;
+            //  dataG1.CanUserReorderColumns = false;
+            //  dataG1.CanUserResizeColumns = false;
+            //  dataG1.CanUserResizeRows = false;
+            //  dataG1.CanUserSortColumns = false;
 
-          //  dataG2.AutoGenerateColumns = false;
-          //  dataG2.MaxHeight = 380;
-          ////  dataG2.RowHeight = 46;
-          //  dataG2.CanUserAddRows = false;
-          //  dataG2.CanUserDeleteRows = false;
-          //  dataG2.CanUserReorderColumns = false;
-          //  dataG2.CanUserResizeColumns = false;
-          //  dataG2.CanUserResizeRows = false;
-          //  dataG2.CanUserSortColumns = false;
+            //  dataG2.AutoGenerateColumns = false;
+            //  dataG2.MaxHeight = 380;
+            ////  dataG2.RowHeight = 46;
+            //  dataG2.CanUserAddRows = false;
+            //  dataG2.CanUserDeleteRows = false;
+            //  dataG2.CanUserReorderColumns = false;
+            //  dataG2.CanUserResizeColumns = false;
+            //  dataG2.CanUserResizeRows = false;
+            //  dataG2.CanUserSortColumns = false;
 
-          //  dataG3.AutoGenerateColumns = false;
-          //  dataG3.MaxHeight = 380;
-          //  //dataG3.RowHeight = 46;
-          //  dataG3.CanUserAddRows = false;
-          //  dataG3.CanUserDeleteRows = false;
-          //  dataG3.CanUserReorderColumns = false;
-          //  dataG3.CanUserResizeColumns = false;
-          //  dataG3.CanUserResizeRows = false;
-          //  dataG3.CanUserSortColumns = false;
+            //  dataG3.AutoGenerateColumns = false;
+            //  dataG3.MaxHeight = 380;
+            //  //dataG3.RowHeight = 46;
+            //  dataG3.CanUserAddRows = false;
+            //  dataG3.CanUserDeleteRows = false;
+            //  dataG3.CanUserReorderColumns = false;
+            //  dataG3.CanUserResizeColumns = false;
+            //  dataG3.CanUserResizeRows = false;
+            //  dataG3.CanUserSortColumns = false;
             #endregion
-            FVDthread = new Thread(() => Config());
-            FVDthread.Start();
-            FNDhwnd = FNDhwnd = IntPtr.Zero;
-
-            //VentsTools.currentActionString = "Показания за день";
-            //Dispatcher.Invoke(new Action(delegate { }));
+            _fvdThread = new Thread(() => StartInit());
+            _fvdThread.Start();
+            _fndHwnd = _fndHwnd = IntPtr.Zero;
 
         }
 
-        private void Config()
-        {          
+        /// <summary>
+        /// Производит первоначальную инициализацию данных на странице
+        /// </summary>
+        private void StartInit()
+        {
             //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+            PBPerform = true;
             VentsTools.currentActionString = "Подключаюсь к Базе данных";
 
-            VT = new VentsTools();
-            bool connectionState = false;
+            _vt = new VentsTools();
 
-            while (!connectionState)
-            {
-                connectionState = VT.FillVentsData(ref VentsData);
-
-                if (!connectionState && this.IsVisible)
-                {
-                    VentsTools.currentActionString = "Нет подключения к базе данных, проверьте настройки сети";
-                    Thread.Sleep(3000);
-                }
-                if (!this.IsVisible)
-                    FVDthread.Suspend();
-            }
-            
-            
+            VentsDataCfg(_vt); //заполним данные по вентиляторам в _ventsData
             VentsTools.currentActionString = "Показания за день";
-            if (!VT.ReadOneDate(ref FirstDay, QueuePosition.First, VentsConst.connectionString, VentsConst._DATAtb))
-                log.Warn("Не удалось получить самую первую дату");
-            Dispatcher.Invoke(new Action(() => dateP.DisplayDateStart = FirstDay));
-            FirstDay = DateTime.MaxValue;
-            if (!VT.ReadOneDate(ref LastDay, QueuePosition.Last, VentsConst.connectionString, VentsConst._DATAtb))
-                log.Warn("Не удалось получить последнюю дату");
-            Dispatcher.Invoke(new Action(() => dateP.DisplayDateEnd = LastDay));
-            Dispatcher.Invoke(new Action(() => dateP.IsEnabled = true));
+            DatePickerInit(_vt);
 
+            //отобразим наш листбокс
             Dispatcher.Invoke(new Action(() =>
             {
-                VentsListBox.ItemsSource = VentsData;
+                VentsListBox.ItemsSource = _ventsData;
                 VentsListBox.Focus();
                 VentsListBox.SelectedItem = VentsListBox.Items.CurrentItem;
             }));
-            
 
-            Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-            waitingModeDelay.Dispose();
+            PBPerform = false;
         }
 
-        
-       
+
+        /// <summary>
+        /// Заполнение новых данных
+        /// </summary>
+        /// <param name="date"></param>
         private void FillNewData(DateTime date)
         {
             try
             {
-                List<DateValues> ValuesList = new List<DateValues>();
+                var ValuesList = new List<DateValues>();
 
                 VentsTools.currentActionString = "Подключаюсь к Базе данных";
-                FNDhwnd = NativeMethods.GetCurrentThreadId();
-                
-                //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-                waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
-                                
+                _fndHwnd = NativeMethods.GetCurrentThreadId();
+
+                PBPerform = true;
+
                 string name = (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).name; })); // возвращает название выбранного вентилятора
-                bool RDVres = VT.ReadHourValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref ValuesList);
+                bool RDVres = _vt.ReadHourValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref ValuesList);
                 if (!RDVres)
                 {
                     throw new Exception(String.Format("Не удалось получить ежечасные данные для {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; })), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
@@ -181,7 +177,7 @@ namespace ventEnergy.Pages
                        lbtime.FontSize = 14;
                        lbtime.FontWeight = FontWeights.Bold;
                        lbtime.BorderBrush = Brushes.Black;
-                      // lbtime.BorderThickness = new Thickness(1.5);
+                       // lbtime.BorderThickness = new Thickness(1.5);
 
                        Label lbvalue = new Label();
                        workGrid.Children.Add(lbvalue);
@@ -285,9 +281,9 @@ namespace ventEnergy.Pages
                 //calculate dayly electric power expense
                 int daylyExpense = 0;
 
-                if(date!=FirstDay)
+                if (date != _firstDay)
                 {
-                    bool daylyRes = VT.ReadDaylyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref daylyExpense);
+                    bool daylyRes = _vt.ReadDaylyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref daylyExpense);
                     if (!daylyRes)
                     {
                         throw new Exception(String.Format("Не удалось получить  данные для дневного расхода {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; })), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
@@ -297,33 +293,67 @@ namespace ventEnergy.Pages
                 {
                     daylyExpense = ValuesList.Last<DateValues>().value - ValuesList.First<DateValues>().value;
                 }
-                daylyExpense = daylyExpense*100;
+                daylyExpense = daylyExpense * 100;
                 Dispatcher.Invoke(new Action(delegate { totaltb.Text = String.Format("Расход {0} за {1} равен {2} кВтч", (VentsListBox.SelectedItem as Vents).descr, date.GetDateTimeFormats('O')[0].Split('T')[0], daylyExpense.ToString()); }));
 
                 //generate current action string and update content of main window textbox
                 string descr = (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; }));
 
-                VentsTools.currentActionString = String.Format("Показания за  {0} {1}", date.Date.GetDateTimeFormats('D',CultureInfo.CreateSpecificCulture("ru-ru"))[0], descr);
-                Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
+                VentsTools.currentActionString = String.Format("Показания за  {0} {1}", date.Date.GetDateTimeFormats('D', CultureInfo.CreateSpecificCulture("ru-ru"))[0], descr);
 
-                //уничтожим таймер к чертям, чтобы крутелик не нервировал почем зря
-                waitingModeDelay.Dispose();
-                FNDhwnd = IntPtr.Zero;
+                PBPerform = false;
+                _fndHwnd = IntPtr.Zero;
             }
             catch (Exception ex)
             {
                 VentsTools.currentActionString = "Не удалось подключиться к базе данных";
-                log.Error(ex.Message);
-                Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-                //уничтожим таймер к чертям, чтобы крутелик не нервировал почем зря
-                waitingModeDelay.Dispose();
-                FNDhwnd = IntPtr.Zero;
+                _log.Error(ex.Message);
+                PBPerform = false;
+                _fndHwnd = IntPtr.Zero;
             }
+        }
+
+        /// <summary>
+        /// Заполняет список <see cref="_ventsData"/> из таблицы конфигурации в базе данных. Ожидает подключения к базе данных, если такового нет.
+        /// </summary>
+        /// <param name="vt"><see cref="VentsTools"/></param>
+        private void VentsDataCfg(VentsTools vt)
+        {
+            bool connectionState = false;
+
+            while (!connectionState)
+            {
+                connectionState = _vt.FillVentsData(ref _ventsData);
+
+                if (!connectionState && this.IsVisible)
+                {
+                    VentsTools.currentActionString = "Нет подключения к базе данных, проверьте настройки сети";
+                    Thread.Sleep(3000);
+                }
+                if (!this.IsVisible)
+                    _fvdThread.Suspend();
+            }
+        }
+
+        /// <summary>
+        /// Определяет временные рамки для <see cref="dateP"/>
+        /// </summary>
+        /// <param name="vt"></param>
+        private void DatePickerInit(VentsTools vt)
+        {
+            if (!_vt.ReadOneDate(ref _firstDay, QueuePosition.First, VentsConst.connectionString, VentsConst._DATAtb))
+                _log.Warn("Не удалось получить самую первую дату");
+            Dispatcher.Invoke(new Action(() => dateP.DisplayDateStart = _firstDay));
+            _firstDay = DateTime.MaxValue;
+            if (!_vt.ReadOneDate(ref _lastDay, QueuePosition.Last, VentsConst.connectionString, VentsConst._DATAtb))
+                _log.Warn("Не удалось получить последнюю дату");
+            Dispatcher.Invoke(new Action(() => dateP.DisplayDateEnd = _lastDay));
+            Dispatcher.Invoke(new Action(() => dateP.IsEnabled = true));
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            
+
         }
 
         //[System.Runtime.InteropServices.DllImport("kernel32.dll")]
@@ -332,25 +362,25 @@ namespace ventEnergy.Pages
         {
             if (!this.IsVisible)
                 return;
-             date = (DateTime)e.AddedItems[0];
+            _date = (DateTime)e.AddedItems[0];
             try
             {
-                if (FNDhwnd != IntPtr.Zero)
+                if (_fndHwnd != IntPtr.Zero)
                 {
                     //  TerminateThread(FNDhwnd, 1);
-                    FNDthread.Abort();
+                    _fndThread.Abort();
                 }
             }
             catch
             {
-                log.Error("Не могу закрыть поток FNDthread {0}", FNDhwnd.ToString());
+                _log.Error("Не могу закрыть поток FNDthread {0}", _fndHwnd.ToString());
             }
 
             if (VentsListBox.SelectedItem != null)
             {
-                FNDthread = new Thread(() => FillNewData(date));
-                FNDthread.Start();
-                FNDhwnd = (IntPtr)FNDthread.ManagedThreadId;
+                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread.Start();
+                _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
         }
 
@@ -363,21 +393,21 @@ namespace ventEnergy.Pages
             }
             try
             {
-                if (FNDhwnd != IntPtr.Zero)
+                if (_fndHwnd != IntPtr.Zero)
                 {
-                    FNDthread.Abort();
+                    _fndThread.Abort();
                 }
             }
             catch
             {
-                log.Error("Не могу закрыть поток FNDthread {0}", FNDhwnd.ToString());
+                _log.Error("Не могу закрыть поток FNDthread {0}", _fndHwnd.ToString());
             }
 
-            if (VentsListBox.SelectedItem != null && dateP.SelectedDate!=null)
+            if (VentsListBox.SelectedItem != null && dateP.SelectedDate != null)
             {
-                FNDthread = new Thread(() => FillNewData(date));
-                FNDthread.Start();
-                FNDhwnd = (IntPtr)FNDthread.ManagedThreadId;
+                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread.Start();
+                _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
 
         }
@@ -403,9 +433,9 @@ namespace ventEnergy.Pages
 
         private void UserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (FVDthread.ThreadState == System.Threading.ThreadState.Suspended)
-                FVDthread.Resume();
-            if (this.IsVisible && FVDthread.ThreadState == System.Threading.ThreadState.Stopped)
+            if (_fvdThread.ThreadState == System.Threading.ThreadState.Suspended)
+                _fvdThread.Resume();
+            if (this.IsVisible && _fvdThread.ThreadState == System.Threading.ThreadState.Stopped)
                 VentsTools.currentActionString = "Показания за день";
         }
 

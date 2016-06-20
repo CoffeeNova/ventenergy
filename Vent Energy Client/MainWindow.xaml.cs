@@ -16,7 +16,7 @@ namespace ventEnergy
     /// </summary>
     public partial class MainWindow : ModernWindow
     {
-        private readonly Logger log = LogManager.GetCurrentClassLogger();
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
        
         public MainWindow()
         {
@@ -36,25 +36,21 @@ namespace ventEnergy
                 }
             }
 
+            //отображать нам лого?
             bool tempLogo = true;
-            if (RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, "StartLogoCHKB") == null)
+            try
             {
-                tempLogo=true;
+            tempLogo = RegistryWorker.GetKeyValue<int>(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, "StartLogoCHKB") == 1 ? false : true;
             }
-            else
+            catch (System.IO.IOException) {}
+            catch(Exception ex)
             {
-                if (RegistryWorker.GetKeyValue(RegistryWorker.WhichRoot.HKEY_LOCAL_MACHINE, VentsConst._SETTINGSLOCATION, "StartLogoCHKB").ToString() == "")
-                    tempLogo= true;
-                else
-                    tempLogo= false;
+                _log.Error(ex.Message + " (чтение из реестра)");
             }
-
             if (startWithLogo && tempLogo)
             {
                 LogoWindow LW = new LogoWindow(main);
                 LW.ShowInTaskbar = false;
-                //Uri iconUri = new Uri("pack://application:,,,,Icons/belsolodLogo.ico", UriKind.RelativeOrAbsolute);
-                //LW.Icon = BitmapFrame.Create(iconUri);
                 LW.Show();
             }
             else

@@ -19,16 +19,31 @@ namespace ventEnergy.Pages
 
        // private bool Init = true;
 
-        private readonly Logger log = LogManager.GetCurrentClassLogger();
-        private List<Vents> VentsData = new List<Vents>();
-        private VentsTools VT;
-        private IntPtr FNDhwnd;
-        private Thread FNDthread;
-        private Thread FVDthread;
-        private DateTime date;
-        private System.Threading.Timer waitingModeDelay;
-        DateTime firstMonth = DateTime.MinValue;
-        DateTime lastMonth = DateTime.MinValue;
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private List<Vents> _ventsData = new List<Vents>();
+        private VentsTools _vt;
+        private IntPtr _fndHwnd;
+        private Thread _fndThread;
+        private Thread _fvdThread;
+        private DateTime _date;
+        private System.Threading.Timer _delayTimer;
+        DateTime _firstMonth = DateTime.MinValue;
+        DateTime _lastMonth = DateTime.MinValue;
+
+        //свойство отвечает за визуализацию прогресс бара
+        private bool PBPerform
+        {
+            set
+            {
+                if (value)
+                    _delayTimer = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+                else
+                {
+                    Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
+                    _delayTimer.Dispose();
+                }
+            }
+        }
 
         public BasicPage1()
         {
@@ -70,58 +85,36 @@ namespace ventEnergy.Pages
             //  dataG3.CanUserResizeRows = false;
             //  dataG3.CanUserSortColumns = false;
             #endregion
-            FVDthread = new Thread(() => Config());
-            FVDthread.Start();
-            FNDhwnd = FNDhwnd = IntPtr.Zero;
+            _fvdThread = new Thread(() => StartInit());
+            _fvdThread.Start();
+            _fndHwnd = _fndHwnd = IntPtr.Zero;
 
             
         }
 
-        private void Config()
+        /// <summary>
+        /// Производит первоначальную инициализацию данных на странице
+        /// </summary>
+        private void StartInit()
         {
             //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+            PBPerform = true;
             VentsTools.currentActionString = "Подключаюсь к Базе данных";
 
-            VT = new VentsTools();
-            bool connectionState = false;
+            _vt = new VentsTools();
 
-            while (!connectionState)
-            {
-                connectionState = VT.FillVentsData(ref VentsData);
-                if (!connectionState && this.IsVisible)
-                {
-                    VentsTools.currentActionString = "Нет подключения к базе данных, проверьте настройки сети";
-                    Thread.Sleep(3000);
-                }
-                if (!this.IsVisible)
-                    FVDthread.Suspend();
-            }
+            VentsDataCfg(_vt); //заполним данные по вентиляторам
+            DatePickerInit(_vt);
 
-            VentsTools.currentActionString = "Показания за месяц";
-            //получим самую первую дату записи в БД, преобразуем её первым днем месяца
-            if (!VT.ReadOneDate(ref firstMonth, QueuePosition.First, VentsConst.connectionString, VentsConst._DATAtb))
-                log.Warn("Не удалось получить самую первую дату");
-            int days = firstMonth.Day;
-            TimeSpan ts = new TimeSpan(days - 1, 0, 0, 0);
-            firstMonth = firstMonth.Date - ts;
-            Dispatcher.Invoke(new Action(() => dateP.DisplayDateStart = firstMonth));
-            //тоже самое с последней датой, преобразовывать не обязательно
-            lastMonth = DateTime.MaxValue;
-            if (!VT.ReadOneDate(ref lastMonth, QueuePosition.Last, VentsConst.connectionString, VentsConst._DATAtb))
-                log.Warn("Не удалось получить последнюю дату");
-            Dispatcher.Invoke(new Action(() => dateP.DisplayDateEnd = lastMonth));
-            Dispatcher.Invoke(new Action(() => dateP.IsEnabled = true));
-
+            //отобразим наш листбокс
             Dispatcher.Invoke(new Action(() =>
             {
-                VentsListBox.ItemsSource = VentsData;
+                VentsListBox.ItemsSource = _ventsData;
                 VentsListBox.Focus();
                 VentsListBox.SelectedItem = VentsListBox.Items.CurrentItem;
             }));
 
-            Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-            waitingModeDelay.Dispose();
+            PBPerform = false;
         }
 
         [System.Runtime.InteropServices.DllImport("kernel32.dll")]
@@ -131,15 +124,15 @@ namespace ventEnergy.Pages
         {
             try
             {
-                List<DateValues> ValuesList = new List<DateValues>();
+                var ValuesList = new List<DateValues>();
 
                 VentsTools.currentActionString = "Подключаюсь к Базе данных";
-                FNDhwnd = GetCurrentThreadId();
+                _fndHwnd = GetCurrentThreadId();
                 //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-                waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+                PBPerform = true;
 
                 string name = (string)Dispatcher.Invoke(new Func<string>(()=> (VentsListBox.SelectedItem as Vents).name )); // возвращает название выбранного вентилятора
-                bool RDVres = VT.ReadDayValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref ValuesList);
+                bool RDVres = _vt.ReadDayValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref ValuesList);
                 if (!RDVres)
                 {
                     throw new Exception(String.Format("Не удалось получить ежедневные данные для {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr;})), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
@@ -291,9 +284,9 @@ namespace ventEnergy.Pages
 
                 //calculate monthly electric power expense
                 int monthlyExpense = 0;
-                if (date != firstMonth)
+                if (date != _firstMonth)
                 {
-                    bool daylyRes = VT.ReadMonthlyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref monthlyExpense);
+                    bool daylyRes = _vt.ReadMonthlyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref monthlyExpense);
                     if (!daylyRes)
                     {
                         throw new Exception(String.Format("Не удалось получить  данные для месячного расхода {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; })), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
@@ -311,22 +304,61 @@ namespace ventEnergy.Pages
 
                 VentsTools.currentActionString = String.Format("Показания за  {0} {1}", date.Date.GetDateTimeFormats('D', CultureInfo.CreateSpecificCulture("ru-ru"))[0], descr);
 
-                Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-
-                //уничтожим таймер к чертям, чтобы крутелик не нервировал почем зря
-                waitingModeDelay.Dispose();
-                FNDhwnd = IntPtr.Zero;
+                PBPerform = false;
+                _fndHwnd = IntPtr.Zero;
 
             }
             catch (Exception ex)
             {
                 VentsTools.currentActionString = "Не удалось подключиться к базе данных";
-                log.Error(ex.Message);
-                Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-                //уничтожим таймер к чертям, чтобы крутелик не нервировал почем зря
-                waitingModeDelay.Dispose();
-                FNDhwnd = IntPtr.Zero;
+                _log.Error(ex.Message);
+                PBPerform = false;
+                _fndHwnd = IntPtr.Zero;
             }
+        }
+
+        /// <summary>
+        /// Заполняет список <see cref="_ventsData"/> из таблицы конфигурации в базе данных. Ожидает подключения к базе данных, если такового нет.
+        /// </summary>
+        /// <param name="vt"><see cref="VentsTools"/></param>
+        private void VentsDataCfg(VentsTools vt)
+        {
+            bool connectionState = false;
+
+            while (!connectionState)
+            {
+                connectionState = _vt.FillVentsData(ref _ventsData);
+
+                if (!connectionState && this.IsVisible)
+                {
+                    VentsTools.currentActionString = "Нет подключения к базе данных, проверьте настройки сети";
+                    Thread.Sleep(3000);
+                }
+                if (!this.IsVisible)
+                    _fvdThread.Suspend();
+            }
+        }
+
+        /// <summary>
+        /// Определяет временные рамки для <see cref="dateP"/>
+        /// </summary>
+        /// <param name="vt"></param>
+        private void DatePickerInit(VentsTools vt)
+        {
+            VentsTools.currentActionString = "Показания за месяц";
+            //получим самую первую дату записи в БД, преобразуем её первым днем месяца
+            if (!_vt.ReadOneDate(ref _firstMonth, QueuePosition.First, VentsConst.connectionString, VentsConst._DATAtb))
+                _log.Warn("Не удалось получить самую первую дату");
+            int days = _firstMonth.Day;
+            TimeSpan ts = new TimeSpan(days - 1, 0, 0, 0);
+            _firstMonth = _firstMonth.Date - ts;
+            Dispatcher.Invoke(new Action(() => dateP.DisplayDateStart = _firstMonth));
+            //тоже самое с последней датой, преобразовывать не обязательно
+            _lastMonth = DateTime.MaxValue;
+            if (!_vt.ReadOneDate(ref _lastMonth, QueuePosition.Last, VentsConst.connectionString, VentsConst._DATAtb))
+                _log.Warn("Не удалось получить последнюю дату");
+            Dispatcher.Invoke(new Action(() => dateP.DisplayDateEnd = _lastMonth));
+            Dispatcher.Invoke(new Action(() => dateP.IsEnabled = true));
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -340,27 +372,27 @@ namespace ventEnergy.Pages
         {
             if (!this.IsVisible)
                 return;
-            date = (DateTime)e.AddedItems[0];
+            _date = (DateTime)e.AddedItems[0];
             var dp = sender as DatePicker;
            // DependencyProperty startDate = DatePicker.DisplayDateStartProperty;
             try
             {
-                if (FNDhwnd != IntPtr.Zero)
+                if (_fndHwnd != IntPtr.Zero)
                 {
                     //  TerminateThread(FNDhwnd, 1);
-                    FNDthread.Abort();
+                    _fndThread.Abort();
                 }
             }
             catch
             {
-                log.Error("Не могу закрыть поток FNDthread {0}", FNDhwnd.ToString());
+                _log.Error("Не могу закрыть поток FNDthread {0}", _fndHwnd.ToString());
             }
 
             if (VentsListBox.SelectedItem != null)
             {
-                FNDthread = new Thread(() => FillNewData(date));
-                FNDthread.Start();
-                FNDhwnd = (IntPtr)FNDthread.ManagedThreadId;
+                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread.Start();
+                _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
         }
 
@@ -373,21 +405,21 @@ namespace ventEnergy.Pages
             }
             try
             {
-                if (FNDhwnd != IntPtr.Zero)
+                if (_fndHwnd != IntPtr.Zero)
                 {
-                    FNDthread.Abort();
+                    _fndThread.Abort();
                 }
             }
             catch
             {
-                log.Error("Не могу закрыть поток FNDthread {0}", FNDhwnd.ToString());
+                _log.Error("Не могу закрыть поток FNDthread {0}", _fndHwnd.ToString());
             }
 
             if (VentsListBox.SelectedItem != null && dateP.SelectedDate != null)
             {
-                FNDthread = new Thread(() => FillNewData(date));
-                FNDthread.Start();
-                FNDhwnd = (IntPtr)FNDthread.ManagedThreadId;
+                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread.Start();
+                _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
 
         }
@@ -400,9 +432,9 @@ namespace ventEnergy.Pages
 
         private void UserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (FVDthread.ThreadState == System.Threading.ThreadState.Suspended)
-                FVDthread.Resume();
-            if (this.IsVisible &&  FVDthread.ThreadState == System.Threading.ThreadState.Stopped)
+            if (_fvdThread.ThreadState == System.Threading.ThreadState.Suspended)
+                _fvdThread.Resume();
+            if (this.IsVisible &&  _fvdThread.ThreadState == System.Threading.ThreadState.Stopped)
                 VentsTools.currentActionString = "Показания за месяц";
         }
         //private void _calendar_previewmouseup(object sender, mousebuttoneventargs e)

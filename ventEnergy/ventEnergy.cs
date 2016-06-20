@@ -535,8 +535,6 @@ namespace ventEnergy
 
         public static string currentSettingString
         {
-
-
             get
             { return curSetStr; }
             set
