@@ -137,6 +137,12 @@
     <Compile Include="VEControls\CheckBoxLP.xaml.cs">
       <DependentUpon>CheckBoxLP.xaml</DependentUpon>
     </Compile>
+    <Compile Include="VEControls\VE_Label.xaml.cs">
+      <DependentUpon>VE_Label.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="VEControls\VE_Calendar.xaml.cs">
+      <DependentUpon>VE_Calendar.xaml</DependentUpon>
+    </Compile>
     <Compile Include="VEControls\VE_TextBox.xaml.cs">
       <DependentUpon>VE_TextBox.xaml</DependentUpon>
     </Compile>
@@ -222,6 +228,14 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="VEControls\CheckBoxLP.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="VEControls\VE_Label.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="VEControls\VE_Calendar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

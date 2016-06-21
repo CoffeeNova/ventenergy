@@ -18,26 +18,44 @@ namespace ventEnergy.Pages.Settings
     public partial class NetworkPage : UserControl
     {
         private readonly Logger _log = LogManager.GetCurrentClassLogger();
-        Thread Cfgthread;
-        NetworkAdapters netwAdapters = new NetworkAdapters();
-        ObservableCollection<NetworkAdapters> CBAItemSource = new ObservableCollection<NetworkAdapters>();
-        private System.Threading.Timer waitingModeDelay;
+        Thread _cfgthread;
+        NetworkAdapters _netwAdapters = new NetworkAdapters();
+        ObservableCollection<NetworkAdapters> _cbaItemSource = new ObservableCollection<NetworkAdapters>();
+        private System.Threading.Timer _delayTimer;
 
-        private ventEnergyIPSettings vipsContainer;
-        private ventEnergyIPSettings vips
+        private ventEnergyIPSettings _vipsContainer;
+        private ventEnergyIPSettings Vips
         {
-            get { return vipsContainer; }
+            get { return _vipsContainer; }
             set
             {
-                if (!value.Equals(vipsContainer))
+                if (!value.Equals(_vipsContainer))
                 {
-                    vipsContainer = value;
-                    onVipsChange(vipsContainer);
+                    _vipsContainer = value;
+                    onVipsChange(_vipsContainer);
                 }
                 else
-                    vipsContainer = value;
+                    _vipsContainer = value;
             }
         }
+
+        /// <summary>
+        /// Cвойство отвечает за визуализацию прогресс бара. Key отвечает за запуск остановку прогресс бара, Value за задержку запуска
+        /// </summary>
+        private KeyValuePair<bool, int> ProgressBarPerform
+        {
+            set
+            {
+                if (value.Key)
+                    _delayTimer = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, value.Value, Timeout.Infinite);
+                else
+                {
+                    Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
+                    _delayTimer.Dispose();
+                }
+            }
+        }
+
         public delegate void del(ventEnergyIPSettings vs);
         public static event del onVipsChange;
 
@@ -46,7 +64,7 @@ namespace ventEnergy.Pages.Settings
             InitializeComponent();
             VentsTools.onChangeSettingsString += this.UpdateMessageLabel;
             onVipsChange += NetworkPage_onVipsChange;
-            vips = new ventEnergyIPSettings();
+            Vips = new ventEnergyIPSettings();
             ventEnergyIPSettings.onBelsIPChange += UpdateBelsIP;
             ventEnergyIPSettings.onBelsMaskChange += UpdateBelsMask;
             ventEnergyIPSettings.onBelsGateChange += UpdateBelsGate;
@@ -54,12 +72,8 @@ namespace ventEnergy.Pages.Settings
             ventEnergyIPSettings.onWincMaskChange += UpdateWincMask;
             ventEnergyIPSettings.onWincGateChange += UpdateWincGate;
 
-
-            //displayedSettings = new ventEnergyIPSettings();
-
-
             //заполним комбобокс всеми сетевыми адаптерами в системе
-            if ((CBAItemSource = netwAdapters.GetAdapters()) != null)
+            if ((_cbaItemSource = _netwAdapters.GetAdapters()) != null)
             {
                 belsIPadr.IsEnabled = false;
                 belsMask.IsEnabled = false;
@@ -67,20 +81,12 @@ namespace ventEnergy.Pages.Settings
                 wincIPadr.IsEnabled = false;
                 wincMask.IsEnabled = false;
                 wincGate.IsEnabled = false;
-
-                //belsCurValIPButt.IsEnabled = false;
-                //belsCurValMaskButt.IsEnabled = false;
-                //belsCurValGatewayButt.IsEnabled = false;
-                //wincCurValIPButt.IsEnabled = false;
-                //wincCurValMaskButt.IsEnabled = false;
-                //wincCurValGatewayButt.IsEnabled = false;
-
                 applyBelsbutt.IsEnabled = false;
                 applyWincbutt.IsEnabled = false;
 
-                comboBoxAdapters.ItemsSource = CBAItemSource;
-                Cfgthread = new Thread(() => Config());
-                Cfgthread.Start();
+                comboBoxAdapters.ItemsSource = _cbaItemSource;
+                _cfgthread = new Thread(() => Config());
+                _cfgthread.Start();
             }
             else
             {
@@ -92,9 +98,7 @@ namespace ventEnergy.Pages.Settings
 
         private void Config()
         {
-            //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
-
+            ProgressBarPerform = new KeyValuePair<bool, int>(true, 100);
 
             //прочитаем из реестра guid последнего использованого адаптера, если такового нет оставим пустое и будем ждать пока пользователь выберет на комбобоксе нужный
             string adaptGUID = String.Empty;
@@ -112,7 +116,7 @@ namespace ventEnergy.Pages.Settings
             {
                 VentsTools.currentSettingString = "Выберите сетевой адаптер";
                 Dispatcher.Invoke(new Action(() => comboBoxAdapters.SelectionChanged += new SelectionChangedEventHandler(comboBoxAdapters_SelectedIndexChangedSuspended)));
-                Cfgthread.Suspend();
+                _cfgthread.Suspend();
                 Dispatcher.Invoke(new Action(() => comboBoxAdapters.SelectionChanged -= new SelectionChangedEventHandler(comboBoxAdapters_SelectedIndexChangedSuspended)));
             }
             else
@@ -133,11 +137,11 @@ namespace ventEnergy.Pages.Settings
                     VentsTools.currentSettingString = "Последний использованный адаптер недоступен, выберите другой";
                     VentsTools.currentSettingString = "Выберите сетевой адаптер";
                     Dispatcher.Invoke(new Action(() => comboBoxAdapters.SelectionChanged += new SelectionChangedEventHandler(comboBoxAdapters_SelectedIndexChangedSuspended)));
-                    Cfgthread.Suspend();
+                    _cfgthread.Suspend();
                     Dispatcher.Invoke(new Action(() => comboBoxAdapters.SelectionChanged -= new SelectionChangedEventHandler(comboBoxAdapters_SelectedIndexChangedSuspended)));
                 }
             }
-            vips = GetIPSettings((string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)));
+            Vips = GetIPSettings((string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)));
             bool state1 = false;
             bool state2 = false;
             bool state3 = false;
@@ -145,22 +149,23 @@ namespace ventEnergy.Pages.Settings
             //Получим текущие настройки на машине, для wincos network запишем дефолтные
             try
             {
-                if (vips.belsIP == null)
-                    vips.belsIP = NM.GetIP(ref state1, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.belsMask == null)
-                    vips.belsMask = NM.GetSubnetMask(ref state2, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.belsGate == null)
-                    vips.belsGate = NM.GetGateway(ref state3, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.wincIP == null)
-                    vips.wincIP = VentsConst._DEFAULTWINCOSIP;
-                if (vips.wincMask == null)
-                    vips.wincMask = VentsConst._DEFAULTWINCOSMASK;
-                if (vips.wincGate == null)
-                    vips.wincGate = VentsConst._DEFAULTWINCOSGATEWAY;
+                if (Vips.belsIP == null)
+                    Vips.belsIP = NM.GetIP(ref state1, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.belsMask == null)
+                    Vips.belsMask = NM.GetSubnetMask(ref state2, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.belsGate == null)
+                    Vips.belsGate = NM.GetGateway(ref state3, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.wincIP == null)
+                    Vips.wincIP = VentsConst._DEFAULTWINCOSIP;
+                if (Vips.wincMask == null)
+                    Vips.wincMask = VentsConst._DEFAULTWINCOSMASK;
+                if (Vips.wincGate == null)
+                    Vips.wincGate = VentsConst._DEFAULTWINCOSGATEWAY;
 
             }
             catch (Exception ex)
             { _log.Error(ex); }
+
             Dispatcher.Invoke(new Action(() =>
             {
                 belsIPadr.IsEnabled = true;
@@ -169,14 +174,6 @@ namespace ventEnergy.Pages.Settings
                 wincIPadr.IsEnabled = true;
                 wincMask.IsEnabled = true;
                 wincGate.IsEnabled = true;
-
-                //belsCurValIPButt.IsEnabled = true;
-                //belsCurValMaskButt.IsEnabled = true;
-                //belsCurValGatewayButt.IsEnabled = true;
-                //wincCurValIPButt.IsEnabled = true;
-                //wincCurValMaskButt.IsEnabled = true;
-                //wincCurValGatewayButt.IsEnabled = true;
-
                 applyBelsbutt.IsEnabled = true;
                 applyWincbutt.IsEnabled = true;
             }));
@@ -188,7 +185,7 @@ namespace ventEnergy.Pages.Settings
                 applyButtonClicked = RegistryWorker.GetKeyValue<string>(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, VentsConst._LASTAPPLYBUTTONCLICKED);
             }
             catch (System.IO.IOException) { }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _log.Error(ex.Message + " (чтение из реестра)");
                 VentsTools.currentSettingString = "Ошибка чтения реестра";
@@ -208,13 +205,11 @@ namespace ventEnergy.Pages.Settings
             else
             {
                 VentsTools.currentSettingString = "Выберите сеть для работы";
-                Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-                waitingModeDelay.Dispose();
+                ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
                 return;
             }
             VentsTools.currentSettingString = String.Format("Последние использованые настройки: {0}", applyButtonClicked == "BELSOLOD" ? "Сеть Белсолод" : "Сеть Wincos");
-            Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-            waitingModeDelay.Dispose();
+            ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
         }
 
         private ventEnergyIPSettings GetIPSettings(string guid)
@@ -233,22 +228,22 @@ namespace ventEnergy.Pages.Settings
                 VentsTools.currentSettingString = "Ошибка чтения реестра";
                 settingsArr = null;
             }
-                if (settingsArr != null)
+            if (settingsArr != null)
+            {
+                for (int i = 0; i < VentsConst._CLIENSETTINGSCOUNT; i++)
                 {
-                    for (int i = 0; i < VentsConst._CLIENSETTINGSCOUNT; i++)
-                    {
-                        if (i < settingsArr.Length)
-                            settingsList.Add(settingsArr[i]);
-                        else
-                            settingsList.Add("");
-                    }
-                    settings.belsIP = settingsList[0];
-                    settings.belsMask = settingsList[1];
-                    settings.belsGate = settingsList[2];
-                    settings.wincIP = settingsList[3];
-                    settings.wincMask = settingsList[4];
-                    settings.wincGate = settingsList[5];
+                    if (i < settingsArr.Length)
+                        settingsList.Add(settingsArr[i]);
+                    else
+                        settingsList.Add("");
                 }
+                settings.belsIP = settingsList[0];
+                settings.belsMask = settingsList[1];
+                settings.belsGate = settingsList[2];
+                settings.wincIP = settingsList[3];
+                settings.wincMask = settingsList[4];
+                settings.wincGate = settingsList[5];
+            }
             return settings;
         }
         private void UpdateMessageLabel(string currentAction)
@@ -289,31 +284,31 @@ namespace ventEnergy.Pages.Settings
         #endregion
         private void comboBoxAdapters_SelectedIndexChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (Cfgthread.ThreadState == ThreadState.Running || Cfgthread.ThreadState == ThreadState.Suspended)
+            if (_cfgthread.ThreadState == ThreadState.Running || _cfgthread.ThreadState == ThreadState.Suspended)
                 return;
             else
             {
                 bool state = false;
                 NetworkManagement NM = new NetworkManagement();
-                vips = GetIPSettings((comboBoxAdapters.SelectedItem as NetworkAdapters).GUID);
-                if (vips.belsIP == null)
-                    vips.belsIP = NM.GetIP(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.belsMask == null)
-                    vips.belsMask = NM.GetSubnetMask(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.belsGate == null)
-                    vips.belsGate = NM.GetGateway(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
-                if (vips.wincIP == null)
-                    vips.wincIP = VentsConst._DEFAULTWINCOSIP;
-                if (vips.wincMask == null)
-                    vips.wincMask = VentsConst._DEFAULTWINCOSMASK;
-                if (vips.wincGate == null)
-                    vips.wincGate = VentsConst._DEFAULTWINCOSGATEWAY;
+                Vips = GetIPSettings((comboBoxAdapters.SelectedItem as NetworkAdapters).GUID);
+                if (Vips.belsIP == null)
+                    Vips.belsIP = NM.GetIP(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.belsMask == null)
+                    Vips.belsMask = NM.GetSubnetMask(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.belsGate == null)
+                    Vips.belsGate = NM.GetGateway(ref state, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)))[0];
+                if (Vips.wincIP == null)
+                    Vips.wincIP = VentsConst._DEFAULTWINCOSIP;
+                if (Vips.wincMask == null)
+                    Vips.wincMask = VentsConst._DEFAULTWINCOSMASK;
+                if (Vips.wincGate == null)
+                    Vips.wincGate = VentsConst._DEFAULTWINCOSGATEWAY;
             }
 
         }
         private void comboBoxAdapters_SelectedIndexChangedSuspended(object sender, SelectionChangedEventArgs e)
         {
-            Cfgthread.Resume();
+            _cfgthread.Resume();
         }
         private void comboBoxAdapters_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -321,8 +316,7 @@ namespace ventEnergy.Pages.Settings
         }
         private void ApplyBelsolod()
         {
-            //запустим таймер с задержкой в 0.1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 100, Timeout.Infinite);
+            ProgressBarPerform = new KeyValuePair<bool, int>(true, 100);
 
             if ((object)Dispatcher.Invoke(new Func<object>(() => { return comboBoxAdapters.SelectedValue; })) != null)
             {
@@ -338,20 +332,20 @@ namespace ventEnergy.Pages.Settings
                         netbiosmark = NM.SetTcpipNetbios(1, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
 
                     //Установим IP
-                    ipmark = NM.SetIP(vips.belsIP, vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
+                    ipmark = NM.SetIP(Vips.belsIP, Vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
                     // Thread.Sleep(3000);
                     if (!ipmark)
                     {
-                        _log.Error(String.Format("Не удалось изменить параметры сети IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", vips.belsIP, vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
+                        _log.Error(String.Format("Не удалось изменить параметры сети IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", Vips.belsIP, Vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
                         VentsTools.currentSettingString = "Не удалось поменять IP адрес";
 
                     }
                     //Установим шлюз
-                    gatemark = NM.SetGateway(vips.belsGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
+                    gatemark = NM.SetGateway(Vips.belsGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
                     // Thread.Sleep(3000);
                     if (!gatemark)
                     {
-                        _log.Error(String.Format("Не удалось изменить параметры сети Gateway={0}, adaperName={1}, adapterGuid={2}", vips.belsGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
+                        _log.Error(String.Format("Не удалось изменить параметры сети Gateway={0}, adaperName={1}, adapterGuid={2}", Vips.belsGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
                         VentsTools.currentSettingString = "Не удалось поменять шлюз";
                     }
 
@@ -379,7 +373,7 @@ namespace ventEnergy.Pages.Settings
                         {
                             RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.String, VentsConst._LASTADPTGUID, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)));
                             //запишем настройки в стринг массиве для этого гуида
-                            string[] settArr = new string[] { vips.belsIP, vips.belsMask, vips.belsGate, vips.wincIP, vips.wincMask, vips.wincGate };
+                            string[] settArr = new string[] { Vips.belsIP, Vips.belsMask, Vips.belsGate, Vips.wincIP, Vips.wincMask, Vips.wincGate };
                             RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._ADAPTERSLOCATION, Microsoft.Win32.RegistryValueKind.MultiString, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)), settArr);
                             //запишем последнюю нажатую кнопку (выбранную сеть)
                             RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.String, VentsConst._LASTAPPLYBUTTONCLICKED, "BELSOLOD");
@@ -389,10 +383,9 @@ namespace ventEnergy.Pages.Settings
                 }
                 catch
                 {
-                    _log.Error(String.Format("Недопустимое значение маски и IP адреса IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", vips.belsIP, vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
+                    _log.Error(String.Format("Недопустимое значение маски и IP адреса IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", Vips.belsIP, Vips.belsMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
                     VentsTools.currentSettingString = "Недопустимое значение маски и IP адреса!";
-                    Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-                    waitingModeDelay.Dispose();
+                    ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
                     Dispatcher.Invoke(new Action(() => { applyBelsbutt.IsEnabled = true; applyWincbutt.IsEnabled = true; }));
                 }
             }
@@ -402,14 +395,12 @@ namespace ventEnergy.Pages.Settings
                 VentsTools.currentSettingString = "Сначала Выберите сетевой адаптер!";
 
             }
-            Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-            waitingModeDelay.Dispose();
+            ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
             Dispatcher.Invoke(new Action(() => { applyBelsbutt.IsEnabled = true; applyWincbutt.IsEnabled = true; }));
         }
         private void ApplyWincos()
         {
-            //запустим таймер с задержкой в 0.1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            waitingModeDelay = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 100, Timeout.Infinite);
+            ProgressBarPerform = new KeyValuePair<bool, int>(true, 100);
 
             if ((object)Dispatcher.Invoke(new Func<object>(() => { return comboBoxAdapters.SelectedValue; })) != null)
             {
@@ -424,19 +415,19 @@ namespace ventEnergy.Pages.Settings
                     if (NM.GetTcpipNetbiosState((string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull))) != 2)
                         netbiosmark = NM.SetTcpipNetbios(2, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
 
-                    ipmark = NM.SetIP(vips.wincIP, vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
+                    ipmark = NM.SetIP(Vips.wincIP, Vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
                     //   Thread.Sleep(3000);
                     if (!ipmark)
                     {
-                        _log.Error(String.Format("Не удалось изменить параметры сети IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", vips.wincIP, vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
+                        _log.Error(String.Format("Не удалось изменить параметры сети IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", Vips.wincIP, Vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
                         VentsTools.currentSettingString = "Не удалось поменять IP адрес";
 
                     }
-                    gatemark = NM.SetGateway(vips.wincGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
+                    gatemark = NM.SetGateway(Vips.wincGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)));
                     //  Thread.Sleep(3000);
                     if (!gatemark)
                     {
-                        _log.Error(String.Format("Не удалось изменить параметры сети Gateway={0}, adaperName={1}, adapterGuid={2}", vips.wincGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
+                        _log.Error(String.Format("Не удалось изменить параметры сети Gateway={0}, adaperName={1}, adapterGuid={2}", Vips.wincGate, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID))));
                         VentsTools.currentSettingString = "Не удалось поменять шлюз";
                     }
 
@@ -460,7 +451,7 @@ namespace ventEnergy.Pages.Settings
                         //начнем а гуида сетевой
                         RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.String, VentsConst._LASTADPTGUID, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)));
                         //запишем настройки в стринг массиве для этого гуида
-                        string[] settArr = new string[] { vips.belsIP, vips.belsMask, vips.belsGate, vips.wincIP, vips.wincMask, vips.wincGate };
+                        string[] settArr = new string[] { Vips.belsIP, Vips.belsMask, Vips.belsGate, Vips.wincIP, Vips.wincMask, Vips.wincGate };
                         RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._ADAPTERSLOCATION, Microsoft.Win32.RegistryValueKind.MultiString, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).GUID)), settArr);
                         //запишем последнюю нажатую кнопку (выбранную сеть)
                         RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive.LocalMachine, VentsConst._SETTINGSLOCATION, Microsoft.Win32.RegistryValueKind.String, VentsConst._LASTAPPLYBUTTONCLICKED, "WINCOS");
@@ -469,10 +460,9 @@ namespace ventEnergy.Pages.Settings
                 }
                 catch
                 {
-                    _log.Error(String.Format("Недопустимое значение маски и IP адреса IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", vips.wincIP, vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull))));
+                    _log.Error(String.Format("Недопустимое значение маски и IP адреса IP={0}, mask={1}, adaperName={2}, adapterGuid={3}", Vips.wincIP, Vips.wincMask, (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull)), (string)Dispatcher.Invoke(new Func<string>(() => (comboBoxAdapters.SelectedItem as NetworkAdapters).AdapterDescriptionFull))));
                     VentsTools.currentSettingString = "Недопустимое значение маски и IP адреса!";
-                    Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-                    waitingModeDelay.Dispose();
+                    ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
                     Dispatcher.Invoke(new Action(() => { applyBelsbutt.IsEnabled = true; applyWincbutt.IsEnabled = true; }));
                 }
             }
@@ -481,54 +471,53 @@ namespace ventEnergy.Pages.Settings
                 _log.Info("Нажата кнопка \"Применить настройки Белсолод\" без выбранного сетевого адаптера");
                 VentsTools.currentSettingString = "Сначала Выберите сетевой адаптер!";
             }
-            Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
-            waitingModeDelay.Dispose();
+            ProgressBarPerform = new KeyValuePair<bool, int>(false, 100);
             Dispatcher.Invoke(new Action(() => { applyBelsbutt.IsEnabled = true; applyWincbutt.IsEnabled = true; }));
         }
         private void applyBelsbutt_Click(object sender, RoutedEventArgs e)
         {
             (sender as Button).IsEnabled = false;
             applyWincbutt.IsEnabled = false;
-            Cfgthread = new Thread(() => ApplyBelsolod());
-            Cfgthread.Start();
+            _cfgthread = new Thread(() => ApplyBelsolod());
+            _cfgthread.Start();
         }
 
         private void applyWincsbutt_Click(object sender, RoutedEventArgs e)
         {
             (sender as Button).IsEnabled = false;
             applyBelsbutt.IsEnabled = false;
-            Cfgthread = new Thread(() => ApplyWincos());
-            Cfgthread.Start();
+            _cfgthread = new Thread(() => ApplyWincos());
+            _cfgthread.Start();
         }
 
         private void belsIPadr_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.belsIP = belsIPadr.Text;
+            Vips.belsIP = belsIPadr.Text;
         }
 
         private void belsMask_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.belsMask = belsMask.Text;
+            Vips.belsMask = belsMask.Text;
         }
 
         private void belsGate_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.belsGate = belsGate.Text;
+            Vips.belsGate = belsGate.Text;
         }
 
         private void wincIPadr_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.wincIP = wincIPadr.Text;
+            Vips.wincIP = wincIPadr.Text;
         }
 
         private void wincMask_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.wincMask = wincMask.Text;
+            Vips.wincMask = wincMask.Text;
         }
 
         private void wincGate_LostFocus(object sender, RoutedEventArgs e)
         {
-            vips.wincGate = wincGate.Text;
+            Vips.wincGate = wincGate.Text;
         }
 
         private void NetworkPage_onVipsChange(ventEnergyIPSettings v)

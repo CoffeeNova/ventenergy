@@ -596,22 +596,29 @@ namespace ventEnergy
             }
         }
 
+
     }
 
     public static class VentsConst
     {
-        public const string _ipPLC = "172.20.199.225";
         public const int _RACK = 0;
         public const int _SLOT = 3;
         public const int _DEFAULT_CHECK_INTERVAL = 60000; //60000 - 1 min
         public const int _CLIENSETTINGSCOUNT = 6;
         public const int _MAX_ENERGY_COUNTER = 30000; // (100 квтч)
         public const int ppo2TypeProcessDataSize = 12;
+        public const int _MAXIMUM_COLUMNS_HOURTABLE = 3;
+        public const int _MAXIMUM_ROWS_HOURTABLE = 9;
+        public const int _VALUE_ROWS_HOURTABLE = 8;
+        public const int _MAXIMUM_COLUMNS_DAYTABLE = 4;
+        public const int _MAXIMUM_ROWS_DAYTABLE = 9;
+        public const int _VALUE_ROWS_DAYTABLE = 9;
+
+        public const string _ipPLC = "172.20.199.225";
         public const string connectionString = @"Integrated Security=false; Persist Security Info=False; Initial Catalog=PIC_D_DATABASE ; Data Source=172.20.199.1; User ID=ventEnergy; Password=belsolod.ventEnergy2015";
         public const string _DATABASENAME = "PIC_D_DATABASE"; //имя Базы данных
         public const string _CONFtb = "ventEnergyConf"; //имя таблицы конфигурации в БД 
         public const string _DATAtb = "ventEnergyData"; //имя таблицы данных в БД 
-
         public const string _PROJECTNAME = "VentEnergy";
         public const string _PROJECTGROUPLOCATION = @"Software\Belsolod";
         public const string _PROJECTGROUPNAME = @"Belsolod";

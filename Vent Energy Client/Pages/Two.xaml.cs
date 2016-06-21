@@ -8,6 +8,8 @@ using System.Windows.Media;
 using NLog;
 using System.Threading;
 using System.Globalization;
+using ventEnergy.Extensions;
+using ventEnergy.VEControls;
 
 namespace ventEnergy.Pages
 {
@@ -17,7 +19,7 @@ namespace ventEnergy.Pages
     public partial class BasicPage1 : UserControl
     {
 
-       // private bool Init = true;
+        // private bool Init = true;
 
         private readonly Logger _log = LogManager.GetCurrentClassLogger();
         private List<Vents> _ventsData = new List<Vents>();
@@ -30,13 +32,15 @@ namespace ventEnergy.Pages
         DateTime _firstMonth = DateTime.MinValue;
         DateTime _lastMonth = DateTime.MinValue;
 
-        //свойство отвечает за визуализацию прогресс бара
-        private bool PBPerform
+        /// <summary>
+        /// Cвойство отвечает за визуализацию прогресс бара. Key отвечает за запуск остановку прогресс бара, Value за задержку запуска
+        /// </summary>
+        private KeyValuePair<bool, int> ProgressBarPerform
         {
             set
             {
-                if (value)
-                    _delayTimer = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, 1000, Timeout.Infinite);
+                if (value.Key)
+                    _delayTimer = new System.Threading.Timer((Object state) => Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = true; pb1.Visibility = Visibility.Visible; })), null, value.Value, Timeout.Infinite);
                 else
                 {
                     Dispatcher.Invoke(new Action(delegate { pb1.IsIndeterminate = false; pb1.Visibility = Visibility.Hidden; }));
@@ -53,7 +57,7 @@ namespace ventEnergy.Pages
             Thread.CurrentThread.CurrentCulture = new CultureInfo("ru-RU");
 
 
-            
+
             #region datagrid config init
             //  dataG1.AutoGenerateColumns = false;
             //  dataG1.MaxHeight = 380;
@@ -89,7 +93,7 @@ namespace ventEnergy.Pages
             _fvdThread.Start();
             _fndHwnd = _fndHwnd = IntPtr.Zero;
 
-            
+
         }
 
         /// <summary>
@@ -97,8 +101,7 @@ namespace ventEnergy.Pages
         /// </summary>
         private void StartInit()
         {
-            //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-            PBPerform = true;
+            ProgressBarPerform = new KeyValuePair<bool, int>(true, 1000);
             VentsTools.currentActionString = "Подключаюсь к Базе данных";
 
             _vt = new VentsTools();
@@ -114,13 +117,13 @@ namespace ventEnergy.Pages
                 VentsListBox.SelectedItem = VentsListBox.Items.CurrentItem;
             }));
 
-            PBPerform = false;
+            ProgressBarPerform = new KeyValuePair<bool, int>(false, 1000);
         }
 
         [System.Runtime.InteropServices.DllImport("kernel32.dll")]
         static extern IntPtr GetCurrentThreadId();
 
-        private void FillNewData(DateTime date)
+        private void UpdatePage(DateTime date)
         {
             try
             {
@@ -129,122 +132,20 @@ namespace ventEnergy.Pages
                 VentsTools.currentActionString = "Подключаюсь к Базе данных";
                 _fndHwnd = GetCurrentThreadId();
                 //запустим таймер с задержкой в 1с для отображения прогрессбара (бесячий кругалек, когда все зависло)
-                PBPerform = true;
+                ProgressBarPerform = new KeyValuePair<bool, int>(true, 1000);
 
-                string name = (string)Dispatcher.Invoke(new Func<string>(()=> (VentsListBox.SelectedItem as Vents).name )); // возвращает название выбранного вентилятора
-                bool RDVres = _vt.ReadDayValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref ValuesList);
+                string ventName = (string)Dispatcher.Invoke(new Func<string>(() => (VentsListBox.SelectedItem as Vents).name)); // возвращает название выбранного вентилятора
+                bool RDVres = _vt.ReadDayValuesFromDB(VentsConst.connectionString, VentsConst._DATAtb, ventName, date, ref ValuesList);
                 if (!RDVres)
-                {
-                    throw new Exception(String.Format("Не удалось получить ежедневные данные для {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr;})), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
-                }
-                //разобьем список на несколько по 8 итемов в каждом
-                //int chunks = 3;
-                int valuesLenght = ValuesList.Count();
-                int chunkLenght = 8;// (int)Math.Ceiling(valuesLenght / (double)chunks);
-                int chunks = (int)Math.Ceiling(valuesLenght / (double)chunkLenght);
-                var parts = Enumerable.Range(0, chunks).Select(i => ValuesList.Skip(i * chunkLenght).Take(chunkLenght).ToList()).ToList();
-                double blockWidth = (double)Dispatcher.Invoke(new Func<double> (() => workGrid.Width / chunks));
-                double blockHeight = (double)Dispatcher.Invoke(new Func<double>(() => workGrid.Height / chunkLenght));
+                    throw new Exception(String.Format("Не удалось получить ежедневные данные для {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; })), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
 
-                blockWidth = 112.5; //as constant
-                #region manually generated datagrid
-                //Dispatcher.Invoke(new Action(delegate
-                //{
-                //    if (parts[0] != null)
-                //    {
-                //        dataG1.ItemsSource = parts[0];
-                //    }
-                //    if (parts[1] != null)
-                //        dataG2.ItemsSource = parts[1];
-                //    if (parts[2] != null)
-                //        dataG3.ItemsSource = parts[2];
-                //    if (parts[3] != null)
-                //        dataG4.ItemsSource = parts[3];
-                //}));
-                #endregion
+                //разобьем список на несколько по VentsConst._VALUE_ROWS_HOURTABLE итемов в каждом
+                var parts = ValuesList.DivideByLenght(VentsConst._VALUE_ROWS_DAYTABLE);
+                double cellWidth = (double)Dispatcher.Invoke(new Func<double>(() => workGrid.Width / VentsConst._MAXIMUM_COLUMNS_DAYTABLE));
+                double cellHeight = (double)Dispatcher.Invoke(new Func<double>(() => workGrid.Height / VentsConst._MAXIMUM_ROWS_DAYTABLE));
 
-                #region autogenerated textboxes
-                Dispatcher.Invoke(new Action(delegate
-                {
-                    workGrid.Children.Clear();
-                    for (int i = 0; i < chunks; i++)
-                    {
-                        Label lbtime = new Label();
-                        workGrid.Children.Add(lbtime);
-                        lbtime.Content = "Дата";
-                        lbtime.Width = 2 * blockWidth/5;
-                        lbtime.Height = 45;
-                        lbtime.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-                        lbtime.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                        lbtime.VerticalContentAlignment = VerticalAlignment.Bottom;
-                        lbtime.HorizontalContentAlignment = HorizontalAlignment.Center;
-                        lbtime.FontSize = 14;
-                        lbtime.FontWeight = FontWeights.Bold;
-                        lbtime.BorderBrush = Brushes.Black;
-                        // lbtime.BorderThickness = new Thickness(1.5);
+                Dispatcher.Invoke(new Action(delegate { BuildDayTable(parts, cellWidth, cellHeight); }));  //построим таблицу
 
-                        Label lbvalue = new Label();
-                        workGrid.Children.Add(lbvalue);
-                        lbvalue.Content = "Энергия\r\n(МВтч)";
-                        lbvalue.Width = 3 * blockWidth / 5;
-                        lbvalue.Height = 45;
-                        lbvalue.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-                        lbvalue.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                        lbvalue.VerticalContentAlignment = VerticalAlignment.Bottom;
-                        lbvalue.HorizontalContentAlignment = HorizontalAlignment.Center;
-                        lbvalue.FontSize = 12;
-                        lbvalue.FontWeight = FontWeights.Bold;
-                        lbvalue.BorderBrush = Brushes.Black;
-                        //lbvalue.BorderThickness = new Thickness(1.5);
-
-
-                        lbtime.Margin = new Thickness(lbtime.Width * i + lbvalue.Width * i, 0, 0, 0);
-                        lbvalue.Margin = new Thickness(lbtime.Width + (lbtime.Width + lbvalue.Width) * i, 0, 0, 0);
-
-                        List<DateValues> listDV = parts[i];
-
-                        for (int j = 0; j < parts[i].Count; j++)
-                        {
-
-                            if (listDV == null)
-                                break;
-                            TextBox tbtime = new TextBox();
-                            workGrid.Children.Add(tbtime);
-                            tbtime.Text = listDV[j].date;
-                            tbtime.Width = 2 * blockWidth / 5;
-                            tbtime.Height = 40;
-                            tbtime.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-                            tbtime.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                            tbtime.IsReadOnly = true;
-                            tbtime.VerticalContentAlignment = VerticalAlignment.Center;
-                            tbtime.HorizontalContentAlignment = HorizontalAlignment.Center;
-                            tbtime.FontSize = 14;
-                            tbtime.FontWeight = FontWeights.Medium;
-                            var fdf = tbtime.Style;
-                            tbtime.Style = (Style)tbtime.FindResource("TextBoxStyleBlueBackgrReadonly");
-
-
-                            TextBox tbvalue = new TextBox();
-                            workGrid.Children.Add(tbvalue);
-                            tbvalue.Text = ((double)listDV[j].value / 10).ToString(); //данные записываются в БД в виде x*100 квтч. поделим на 10 чтобы получить Мвтч
-                            tbvalue.Width = 3 * blockWidth / 5;
-                            tbvalue.Height = 40;
-                            tbvalue.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-                            tbvalue.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                            tbvalue.IsReadOnly = true;
-                            tbvalue.VerticalContentAlignment = VerticalAlignment.Center;
-                            tbvalue.HorizontalContentAlignment = HorizontalAlignment.Center;
-                            tbvalue.FontSize = 14;
-                            tbvalue.FontWeight = FontWeights.Medium;
-                            tbvalue.Style = (Style)tbtime.FindResource("TextBoxStyleNoShadow");
-
-                            tbtime.Margin = new Thickness(tbtime.Width * i + tbvalue.Width * i, lbtime.Height + tbtime.Height * j, 0, 0);
-                            tbvalue.Margin = new Thickness(tbtime.Width + (tbtime.Width + tbvalue.Width) * i, lbvalue.Height + tbvalue.Height * j, 0, 0);
-
-                        }
-                    }
-                }));
-                #endregion
                 #region autogenerated datagrid
                 //Dispatcher.Invoke(new Action(delegate
                 //{
@@ -286,7 +187,7 @@ namespace ventEnergy.Pages
                 int monthlyExpense = 0;
                 if (date != _firstMonth)
                 {
-                    bool daylyRes = _vt.ReadMonthlyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, name, date, ref monthlyExpense);
+                    bool daylyRes = _vt.ReadMonthlyExpenseFromDB(VentsConst.connectionString, VentsConst._DATAtb, ventName, date, ref monthlyExpense);
                     if (!daylyRes)
                     {
                         throw new Exception(String.Format("Не удалось получить  данные для месячного расхода {0} за {1}", (string)Dispatcher.Invoke(new Func<string>(delegate { return (VentsListBox.SelectedItem as Vents).descr; })), (string)Dispatcher.Invoke(new Func<string>(delegate { return (string)dateP.DisplayDate.ToString(); }))));
@@ -304,7 +205,7 @@ namespace ventEnergy.Pages
 
                 VentsTools.currentActionString = String.Format("Показания за  {0} {1}", date.Date.GetDateTimeFormats('D', CultureInfo.CreateSpecificCulture("ru-ru"))[0], descr);
 
-                PBPerform = false;
+                ProgressBarPerform = new KeyValuePair<bool, int>(false, 1000);
                 _fndHwnd = IntPtr.Zero;
 
             }
@@ -312,7 +213,7 @@ namespace ventEnergy.Pages
             {
                 VentsTools.currentActionString = "Не удалось подключиться к базе данных";
                 _log.Error(ex.Message);
-                PBPerform = false;
+                ProgressBarPerform = new KeyValuePair<bool, int>(false, 1000);
                 _fndHwnd = IntPtr.Zero;
             }
         }
@@ -361,6 +262,43 @@ namespace ventEnergy.Pages
             Dispatcher.Invoke(new Action(() => dateP.IsEnabled = true));
         }
 
+        /// <summary>
+        /// Строит дневную таблицу и заполняет ее данными из массива.<paramref name="data"/>
+        /// </summary>
+        /// <param name="data">Массив данных.</param>
+        /// <param name="cellWidth">Ширина ячейки время+значение.</param>
+        /// <param name="cellHeight">Высота ячейки время+значение.</param>
+        private void BuildDayTable(List<List<DateValues>> data, double cellWidth, double cellHeight)
+        {
+            workGrid.Children.Clear();
+            for (int i = 0; i < data.Count; i++)
+            {
+                var lbtime = new VE_Label(VE_Label.LabelType.TimeLabel, cellWidth * 2 / 5, cellHeight, "Дата");
+                var lbvalue = new VE_Label(VE_Label.LabelType.IndicatorLabel, cellWidth * 3 / 5, cellHeight, "Энергия\r\n(МВтч)");
+                workGrid.Children.Add(lbtime);
+                workGrid.Children.Add(lbvalue);
+
+                lbtime.Margin = new Thickness(lbtime.Width * i + lbvalue.Width * i, 0, 0, 0);
+                lbvalue.Margin = new Thickness(lbtime.Width + (lbtime.Width + lbvalue.Width) * i, 0, 0, 0);
+
+                List<DateValues> listDV = data[i];
+
+                for (int j = 0; j < data[i].Count; j++)
+                {
+                    if (listDV == null) break;
+
+                    VE_TextBox tbtime = new VE_TextBox(VE_TextBox.TextBoxType.TimeTextBox, cellWidth * 2 / 5, cellHeight, listDV[j].date);
+                    tbtime.Text = listDV[j].date;
+                    VE_TextBox tbvalue = new VE_TextBox(VE_TextBox.TextBoxType.IndicatorTextBox, cellWidth * 3 / 5, cellHeight, ((double)listDV[j].value / 10).ToString()); //данные записываются в БД в виде x*100 квтч. поделим на 10 чтобы получить Мвтч
+                    workGrid.Children.Add(tbtime);
+                    workGrid.Children.Add(tbvalue);
+
+                    tbtime.Margin = new Thickness(tbtime.Width * i + tbvalue.Width * i, lbtime.Height + tbtime.Height * j, 0, 0);
+                    tbvalue.Margin = new Thickness(tbtime.Width + (tbtime.Width + tbvalue.Width) * i, lbvalue.Height + tbvalue.Height * j, 0, 0);
+                }
+            }
+        }
+
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
 
@@ -374,14 +312,10 @@ namespace ventEnergy.Pages
                 return;
             _date = (DateTime)e.AddedItems[0];
             var dp = sender as DatePicker;
-           // DependencyProperty startDate = DatePicker.DisplayDateStartProperty;
             try
             {
                 if (_fndHwnd != IntPtr.Zero)
-                {
-                    //  TerminateThread(FNDhwnd, 1);
                     _fndThread.Abort();
-                }
             }
             catch
             {
@@ -390,7 +324,7 @@ namespace ventEnergy.Pages
 
             if (VentsListBox.SelectedItem != null)
             {
-                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread = new Thread(() => UpdatePage(_date));
                 _fndThread.Start();
                 _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
@@ -406,9 +340,7 @@ namespace ventEnergy.Pages
             try
             {
                 if (_fndHwnd != IntPtr.Zero)
-                {
                     _fndThread.Abort();
-                }
             }
             catch
             {
@@ -417,7 +349,7 @@ namespace ventEnergy.Pages
 
             if (VentsListBox.SelectedItem != null && dateP.SelectedDate != null)
             {
-                _fndThread = new Thread(() => FillNewData(_date));
+                _fndThread = new Thread(() => UpdatePage(_date));
                 _fndThread.Start();
                 _fndHwnd = (IntPtr)_fndThread.ManagedThreadId;
             }
@@ -434,16 +366,9 @@ namespace ventEnergy.Pages
         {
             if (_fvdThread.ThreadState == System.Threading.ThreadState.Suspended)
                 _fvdThread.Resume();
-            if (this.IsVisible &&  _fvdThread.ThreadState == System.Threading.ThreadState.Stopped)
+            if (this.IsVisible && _fvdThread.ThreadState == System.Threading.ThreadState.Stopped)
                 VentsTools.currentActionString = "Показания за месяц";
         }
-        //private void _calendar_previewmouseup(object sender, mousebuttoneventargs e)
-        //{
-        //    if (mouse.captured is calendaritem)
-        //    {
-        //        mouse.capture(null);
-        //    }
-        //}
     }
 
 }

@@ -15,54 +15,53 @@ using System.Windows.Shapes;
 namespace ventEnergy.VEControls
 {
     /// <summary>
-    /// Логика взаимодействия для VE_TextBox.xaml
+    /// Логика взаимодействия для VE_Label.xaml
     /// </summary>
-    public partial class VE_TextBox : TextBox
+    public partial class VE_Label : Label
     {
-        public enum TextBoxType
+        public enum LabelType
         {
-            TimeTextBox,
-            IndicatorTextBox
+            TimeLabel,
+            IndicatorLabel
         }
-        public VE_TextBox(TextBoxType tbType, double width, double height, string text)
+
+        public VE_Label(LabelType lType, double width, double height, string content)
         {
             InitializeComponent();
 
-            switch (tbType)
+            switch (lType)
             {
-                case TextBoxType.TimeTextBox:
-                    InitPropForTimeTextBox();
+                case LabelType.TimeLabel:
+                    InitPropForTimeLabel();
                     break;
-                case TextBoxType.IndicatorTextBox:
-                    InitPropForIndicatorTextBox();
+                case LabelType.IndicatorLabel:
+                    InitPropForIndicatorLabel();
                     break;
             }
             Width = width;
             Height = height;
-            Text = text;
+            Content = content;
+        }
+        private void InitPropForTimeLabel()
+        {
+            VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            VerticalContentAlignment = VerticalAlignment.Top;
+            HorizontalContentAlignment = HorizontalAlignment.Center;
+            FontSize = 14;
+            FontWeight = FontWeights.Bold;
+            BorderBrush = Brushes.Black;
         }
 
-        private void InitPropForTimeTextBox()
+        private void InitPropForIndicatorLabel()
         {
             VerticalAlignment = System.Windows.VerticalAlignment.Top;
             HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            IsReadOnly = true;
-            VerticalContentAlignment = VerticalAlignment.Center;
+            VerticalContentAlignment = VerticalAlignment.Top;
             HorizontalContentAlignment = HorizontalAlignment.Center;
             FontSize = 14;
-            FontWeight = FontWeights.Medium;
-            Style = (Style)this.FindResource("TextBoxStyleBlueBackgrReadonly");
-        }
-        private void InitPropForIndicatorTextBox()
-        {
-            VerticalAlignment = System.Windows.VerticalAlignment.Top;
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            IsReadOnly = true;
-            VerticalContentAlignment = VerticalAlignment.Center;
-            HorizontalContentAlignment = HorizontalAlignment.Center;
-            FontSize = 14;
-            FontWeight = FontWeights.Medium;
-            Style = (Style)this.FindResource("TextBoxStyleNoShadow");
+            FontWeight = FontWeights.Bold;
+            BorderBrush = Brushes.Black;
         }
     }
 }
