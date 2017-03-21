@@ -22,11 +22,13 @@
                 <TextBlock x:Name="changelogTB" Padding="5"  TextWrapping="Wrap" 
                            ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
                            >
-                    <Run Text='Версия 1.0.0.5 - отображаемые данные для удобства будут отображаться в МВтч, вместо 100* кВтч'/>
+                    <Run Text='Версия 1.0.0.6 - исправлены мелкие недочеты таблицы.'/>
                     <LineBreak />
-                    <Run Text='Версия 1.0.0.4 - исправлены баги в сетевых настройках, добавлена проверка состояния NetBios'/>
+                    <Run Text='Версия 1.0.0.5 - отображаемые данные для удобства будут отображаться в МВтч, вместо 100* кВтч.'/>
                     <LineBreak />
-                    <Run Text='Версия 1.0.0.3 - первый релиз'/>
+                    <Run Text='Версия 1.0.0.4 - исправлены баги в сетевых настройках, добавлена проверка состояния NetBios.'/>
+                    <LineBreak />
+                    <Run Text='Версия 1.0.0.3 - первый релиз.'/>
                 </TextBlock>
             </ScrollViewer>
             <TextBlock/>

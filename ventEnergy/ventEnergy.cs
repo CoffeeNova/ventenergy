@@ -612,7 +612,9 @@ namespace ventEnergy
         public const int _VALUE_ROWS_HOURTABLE = 8;
         public const int _MAXIMUM_COLUMNS_DAYTABLE = 4;
         public const int _MAXIMUM_ROWS_DAYTABLE = 9;
-        public const int _VALUE_ROWS_DAYTABLE = 9;
+        public const int _VALUE_ROWS_DAYTABLE = 8;
+
+        public const double _HEADER_CELL_HEIGHT = 50.0;
 
         public const string _ipPLC = "172.20.199.225";
         public const string connectionString = @"Integrated Security=false; Persist Security Info=False; Initial Catalog=PIC_D_DATABASE ; Data Source=172.20.199.1; User ID=ventEnergy; Password=belsolod.ventEnergy2015";

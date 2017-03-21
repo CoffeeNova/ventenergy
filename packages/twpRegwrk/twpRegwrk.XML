@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>twpRegwrk</name>
+    </assembly>
+    <members>
+        <member name="M:NWTweak.RegistryWorker.DeleteKey(Microsoft.Win32.RegistryHive,System.String,System.String)">
+            <summary>
+            Удаление значения ключа из реестра.
+            </summary>
+            <param name="rootKey">Раздел HKEY.</param>
+            <param name="keyLocation">Путь ключа.</param>
+            <param name="valueName">Имя значения.</param>
+            <returns><see langword="true"/> - если удаление прошло успешно</returns>
+        </member>
+        <member name="M:NWTweak.RegistryWorker.FindSubKey(Microsoft.Win32.RegistryHive,System.String,System.String)">
+            <summary>
+            Ищет первое же попавшееся вхождние значения <paramref name="valueName"/>  в ключе <paramref name="subKeyLocation"/>
+            </summary>
+            <param name="rootKey">Раздел HKEY</param>
+            <param name="subKeyLocation">Путь ключа в котором производить поиск </param>
+            <param name="valueName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NWTweak.RegistryWorker.GetValuesFromKey``1(Microsoft.Win32.RegistryHive,System.String)">
+            <summary>
+            Получает все значения типа <typeparamref name="T"/> в ключе <paramref name="keyLocation"/> 
+            </summary>
+            <typeparam name="T">Тип данных</typeparam>
+            <param name="rootKey">Раздел HKEY</param>
+            <param name="keyLocation">Путь ключа</param>
+            <returns>Список, <see langword="null"/> - при неудачной операции, или пустом ключе</returns>
+            <remarks>Для получения значений всех типов, следует указать тип <typeparamref name="T"/> как <see langword="object"/></remarks>
+            <exception cref="T:System.IO.IOException">Произошла системная ошибка, например, был удален текущий раздел</exception>
+            <exception cref="T:System.ArgumentException">Недопустимое значение параметра rootKey</exception>
+            <exception cref="T:System.UnauthorizedAccessException">У пользователя отсутствуют необходимые права доступа к реестру</exception>
+            <exception cref="T:System.ArgumentNullException">name имеет значение <see langword="null"/></exception>
+            <exception cref="T:System.ObjectDisposedException">Раздел Microsoft.Win32.RegistryKey является закрытым (доступ к закрытым разделам невозможен)</exception>
+            <exception cref="T:System.Security.SecurityException">У пользователя отсутствуют разрешения, необходимые для доступа к разделу реестра в заданном режиме</exception>
+        </member>
+        <member name="M:NWTweak.RegistryWorker.GetSubKeyNames(Microsoft.Win32.RegistryHive,System.String)">
+            <summary>
+            Возвращает все имена сабключей в в ключе <paramref name="keyLocation"/>
+            </summary>
+            <param name="rootKey">Раздел HKEY</param>
+            <param name="keyLocation">Путь ключа</param>
+            <exception cref="T:System.IO.IOException">Произошла системная ошибка, например, был удален текущий раздел</exception>
+            <exception cref="T:System.ArgumentException">Недопустимое значение параметра rootKey</exception>
+            <exception cref="T:System.UnauthorizedAccessException">У пользователя отсутствуют необходимые права доступа к реестру</exception>
+            <exception cref="T:System.ArgumentNullException">name имеет значение <see langword="null"/></exception>
+            <exception cref="T:System.ObjectDisposedException">Раздел Microsoft.Win32.RegistryKey является закрытым (доступ к закрытым разделам невозможен)</exception>
+            <exception cref="T:System.Security.SecurityException">У пользователя отсутствуют разрешения, необходимые для доступа к разделу реестра в заданном режиме</exception>
+            <returns>Список имен сабключей</returns>
+        </member>
+        <member name="M:NWTweak.RegistryWorker.GetKeyValue``1(Microsoft.Win32.RegistryHive,System.String,System.String)">
+            <summary>
+            Чтение значения ключа из реестра типа <typeparamref name="T"/>
+            </summary>
+            <typeparam name="T">Тип данных</typeparam>
+            <param name="rootKey">Раздел HKEY</param>
+            <param name="keyLocation">Путь ключа</param>
+            <param name="valueName">Имя значения</param>
+            <returns>Значение ключа, <see langword="null"/>, если пара-значение отсутствует в реестре </returns>
+            <remarks> Для получения значений всех типов, следует указать тип <typeparamref name="T"/> как <see langword="object"/></remarks>
+            <exception cref="T:System.IO.IOException">Произошла системная ошибка, например, был удален текущий раздел</exception>
+            <exception cref="T:System.ArgumentException">Недопустимое значение параметра rootKey</exception>
+            <exception cref="T:System.UnauthorizedAccessException">У пользователя отсутствуют необходимые права доступа к реестру</exception>
+            <exception cref="T:System.ArgumentNullException">name имеет значение <see langword="null"/></exception>
+            <exception cref="T:System.ObjectDisposedException">Раздел Microsoft.Win32.RegistryKey является закрытым (доступ к закрытым разделам невозможен)</exception>
+            <exception cref="T:System.Security.SecurityException">У пользователя отсутствуют разрешения, необходимые для доступа к разделу реестра в заданном режиме</exception>
+        </member>
+        <member name="M:NWTweak.RegistryWorker.WriteKeyValue(Microsoft.Win32.RegistryHive,System.String,Microsoft.Win32.RegistryValueKind,System.String,System.Object)">
+            <summary>
+            Записывает значение ключа в реестр
+            </summary>
+            <param name="rootKey"></param>
+            <param name="keyLocation"></param>
+            <param name="valueKind"></param>
+            <param name="valueName"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <!-- Некорректный комментарий в формате XML для члена "M:NWTweak.RegistryWorker.CreateSubKey(Microsoft.Win32.RegistryHive,System.String)" проигнорирован -->
+    </members>
+</doc>
