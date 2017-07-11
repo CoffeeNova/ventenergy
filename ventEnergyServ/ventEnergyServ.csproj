@@ -163,9 +163,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>del  "e:\MailRu Cloud\Visual Studio Projects\ventEnergy\Release\*.xml"
-del "e:\MailRu Cloud\Visual Studio Projects\ventEnergy\Release\*.pdb"
-del "e:\MailRu Cloud\Visual Studio Projects\ventEnergy\Release\*.manifest"</PostBuildEvent>
+    <PostBuildEvent>del  "$(TargetDir)\*.xml"
+del "$(TargetDir)\*.pdb"
+del "$(TargetDir)\*.manifest"
+del "$(TargetDir)\ventEnergyServ.exe.config"
+del "$(TargetDir)\Vent Energy Client.vshost.exe" /a</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
